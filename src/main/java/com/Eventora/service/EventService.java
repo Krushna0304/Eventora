@@ -1,0 +1,140 @@
+package com.Eventora.service;
+import com.Eventora.Utils.ApplicationContextUtils;
+import com.Eventora.Utils.EventUtils;
+import com.Eventora.dto.CreateEventDto;
+import com.Eventora.dto.EventDetailDto;
+import com.Eventora.dto.EventFilterRequest;
+import com.Eventora.dto.EventTemplate;
+import com.Eventora.entity.AppUser;
+import com.Eventora.entity.Event;
+import com.Eventora.entity.enums.EventStatus;
+import com.Eventora.entity.enums.RegistrationStatus;
+import com.Eventora.repository.AppUserRepository;
+import com.Eventora.repository.EventRepository;
+import jakarta.persistence.criteria.Predicate;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class EventService {
+
+    private final RegistrationService registrationService;
+    private final AWSS3Service awss3Service;
+    private final EventRepository eventRepository;
+    private final AppUserRepository appUserRepository;
+    private final EventUtils eventUtils;
+    private final ApplicationContextUtils applicationContextUtils;
+
+    public EventDetailDto createEvent(CreateEventDto createEventDto, MultipartFile file) throws Exception {
+        String email = "test@gmail.com";
+        AppUser organizer = appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new Exception("Logged-in user not found"));
+
+        // Build Event entity from DTO
+        String fileUrl = file == null ? createEventDto.imageUrl(): awss3Service.uploadFile(file);
+        Event event = Event.builder()
+                .title(createEventDto.title())
+                .description(createEventDto.description())
+                .eventCategory(createEventDto.eventCategory())
+                .locationName(createEventDto.locationName())
+                .city(createEventDto.city())
+                .state(createEventDto.state())
+                .country(createEventDto.country())
+                .latitude(createEventDto.latitude())
+                .longitude(createEventDto.longitude())
+                .startDate(createEventDto.startDate())
+                .endDate(createEventDto.endDate())
+                .maxParticipants(createEventDto.maxParticipants())
+                .price(createEventDto.price() != null ? createEventDto.price() : BigDecimal.ZERO)
+                .imageUrl(fileUrl)
+                .tags(createEventDto.tags())
+                .eventStatus(createEventDto.eventStatus() != null ? createEventDto.eventStatus() : EventStatus.UPCOMING)
+                .organizer(organizer)
+                .currentParticipants(0)
+                .build();
+
+        // Save to repository
+        eventRepository.save(event);
+        return eventUtils.mapToEventDetailDto(event, RegistrationStatus.NONE);
+    }
+    public List<EventTemplate> getFilteredEvents(EventFilterRequest filter) {
+
+        List<Event> events = eventRepository.findAll((root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Price Range (BigDecimal)
+            if (filter.getMinPrice() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filter.getMinPrice()));
+            }
+            if (filter.getMaxPrice() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), filter.getMaxPrice()));
+            }
+
+            // City, State, Country (String)
+            if (filter.getCity() != null && !filter.getCity().isEmpty()) {
+                predicates.add(cb.equal(cb.lower(root.get("city")), filter.getCity().toLowerCase()));
+            }
+            if (filter.getState() != null && !filter.getState().isEmpty()) {
+                predicates.add(cb.equal(cb.lower(root.get("state")), filter.getState().toLowerCase()));
+            }
+            if (filter.getCountry() != null && !filter.getCountry().isEmpty()) {
+                predicates.add(cb.equal(cb.lower(root.get("country")), filter.getCountry().toLowerCase()));
+            }
+
+            // Event Category (Enum)
+            if (filter.getEventCategory() != null) {
+                predicates.add(cb.equal(root.get("eventCategory"), filter.getEventCategory()));
+            }
+
+            // Nearby radius filter (latitude & longitude)
+            if (filter.getLatitude() != null && filter.getLongitude() != null && filter.getRadiusInKm() != null) {
+                double lat = filter.getLatitude();
+                double lon = filter.getLongitude();
+                double radius = filter.getRadiusInKm();
+
+                // Approximate latitude/longitude bounds
+                double latMin = lat - radius / 111.0;
+                double latMax = lat + radius / 111.0;
+                double lonMin = lon - radius / (111.0 * Math.cos(Math.toRadians(lat)));
+                double lonMax = lon + radius / (111.0 * Math.cos(Math.toRadians(lat)));
+
+                predicates.add(cb.between(root.get("latitude"), latMin, latMax));
+                predicates.add(cb.between(root.get("longitude"), lonMin, lonMax));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        });
+
+        // Convert to EventTemplate DTOs
+        return eventUtils.extractEventTemplates(events);
+    }
+
+
+    public EventDetailDto getEventById(Long eventId) throws Exception {
+        Event event =eventRepository.findById(eventId)
+                .orElseThrow(() -> new Exception("Event not found with id: " + eventId));
+        String email = applicationContextUtils.getLoggedUserEmail();
+        RegistrationStatus userStatus = RegistrationStatus.NONE;
+        if(!email.isEmpty())
+        {
+            AppUser appUser = appUserRepository.findByEmail(email)
+                    .orElseThrow(() -> new Exception("User not found"));
+            userStatus = registrationService.checkIsUserRegisteredForEvent(event,appUser);
+        }
+
+        return eventUtils.mapToEventDetailDto(event,userStatus);
+    }
+    public void deleteEvent(Long eventId) throws Exception {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new Exception("Event not found with id: " + eventId));
+        eventRepository.delete(event);
+    }
+
+
+}
