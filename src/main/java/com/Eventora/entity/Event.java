@@ -101,4 +101,5 @@ public class Event {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
 }

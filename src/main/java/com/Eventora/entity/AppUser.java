@@ -11,7 +11,7 @@ public class AppUser {
     private Long id;
 
     @Column(unique = true,nullable = false)
-    private String username;
+    private String displayName;
     @Column(unique = true,nullable = false)
     private String email;
     @Column(nullable = false)
