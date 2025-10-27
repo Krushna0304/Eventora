@@ -30,8 +30,6 @@ public class EventController {
         }
     }
 
-
-
     @PostMapping("/getByFilter")
     public ResponseEntity<?> filterEvents(@RequestBody EventFilterRequest filterRequest) {
        try{

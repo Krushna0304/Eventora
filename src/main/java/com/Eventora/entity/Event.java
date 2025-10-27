@@ -3,22 +3,20 @@ package com.Eventora.entity;
 import com.Eventora.entity.enums.EventCategory;
 import com.Eventora.entity.enums.EventStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
-
 
 @Builder
 @Data
-@NoArgsConstructor // Add this
-@AllArgsConstructor // Optional, if you want an all-args constructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(
         name = "events",
@@ -57,10 +55,10 @@ public class Event {
     @Column(nullable = false, length = 100)
     private String country;
 
-    @Column(precision = 9, nullable = false)
+    @Column(nullable = false, columnDefinition = "double precision")
     private Double latitude;
 
-    @Column(precision = 9, nullable = false)
+    @Column(nullable = false, columnDefinition = "double precision")
     private Double longitude;
 
     @Column(nullable = false)
@@ -72,7 +70,6 @@ public class Event {
     @Column(nullable = false)
     private Integer maxParticipants;
 
-   // @Column(nullable = false)
     private Integer currentParticipants = 0;
 
     @Column(precision = 10, scale = 2)
@@ -85,8 +82,49 @@ public class Event {
             name = "event_tags",
             joinColumns = @JoinColumn(name = "event_id")
     )
-    @Column(name = "tag", nullable = false, length = 50)
-    private List<String> tags;
+    @Column(name = "tag", length = 50)
+    private List<String> tags = new ArrayList<>();
+
+
+    @CreationTimestamp
+    @Column(nullable = true)
+    private LocalDateTime postedAt;
+
+    @Column(nullable = true)
+    private Integer postedDaysBeforeEvent;
+
+    @Column(nullable = true)
+    private Long promotionSpend = 0L;
+
+    @Column(nullable = true, columnDefinition = "double precision")
+    private Double organizerReputation = 0.0; // 0.0 - 1.0
+
+    @Column(nullable = true, columnDefinition = "double precision")
+    private Double avgPastAttendanceRate = 0.0; // 0.0 - 1.0
+
+    @Column(nullable = true, length = 20)
+    private String cityCategory; // small, medium, large
+
+    @Column(nullable = false)
+    private Integer impressions = 0;
+
+    @Column(nullable = false)
+    private Integer clicks = 0;
+
+    @Column(nullable = true, columnDefinition = "double precision")
+    private Double ctr = 0.0;
+
+    @Column(nullable = true)
+    private Integer socialMentions = 0;
+
+    @Column(nullable = true)
+    private Integer tagsCount = 0;
+
+    @Column(nullable = true)
+    private Integer checkedInCount = 0;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal revenue = BigDecimal.valueOf(0.00d); // checkedInCount * price
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
@@ -101,5 +139,32 @@ public class Event {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    public void beforeSaveOrUpdate() {
+        // recalculate postedDaysBeforeEvent
+        if (startDate != null && postedAt != null) {
+            this.postedDaysBeforeEvent = (int) ChronoUnit.DAYS.between(postedAt, startDate);
+        }
+
+        // update tags count
+        this.tagsCount = (tags == null) ? 0 : tags.size();
+
+        // update CTR
+        if (impressions != null && impressions > 0) {
+            this.ctr = (double) clicks / impressions;
+        } else {
+            this.ctr = 0.0;
+        }
+
+        // calculate revenue
+        if (price != null && checkedInCount != null) {
+            this.revenue = price.multiply(BigDecimal.valueOf(checkedInCount));
+        } else {
+            this.revenue = BigDecimal.ZERO;
+        }
+    }
+
 
 }

@@ -30,5 +30,7 @@ public record CreateEventDto(
         // Optional field for image URL - can be null Acept as a multipart file store in aws s3 bucket and store the url in db
         String imageUrl,
         List<String> tags,
-        EventStatus eventStatus
+        EventStatus eventStatus,
+        Long promotionSpend,
+        Integer socialMentions
 ) {}

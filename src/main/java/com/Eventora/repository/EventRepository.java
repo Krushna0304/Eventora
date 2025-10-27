@@ -8,11 +8,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public interface EventRepository extends JpaRepository<Event, Long> , JpaSpecificationExecutor<Event> {
     List<Event> findByEventCategory(EventCategory category);
     List<Event> findByEventStatus(EventStatus status);
@@ -20,6 +22,7 @@ public interface EventRepository extends JpaRepository<Event, Long> , JpaSpecifi
     List<Event> findByCityIgnoreCaseAndEventCategory(String city, EventCategory category);
     List<Event> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
     List<Event> findByIdAndOrganizer(Long eventId,AppUser appUser);
+    List<Event> findByOrganizerAndEndDateBefore(AppUser organizer, LocalDateTime dateTime);
 
     @Query("SELECT e FROM Event e JOIN e.tags t WHERE LOWER(t) = LOWER(:tag)")
     List<Event> findByTag(@Param("tag") String tag);

@@ -5,5 +5,6 @@ public enum RegistrationStatus {
     NONE,
     CANCELLED,
     WAITLISTED,
-    CHECKED_IN
+    CHECKED_IN,
+    MISSED
 }

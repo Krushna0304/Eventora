@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -53,4 +54,17 @@ public class Registration {
     private LocalDateTime attendanceMarkedAt;
 
     private String paymentReference; // optional if event is paid
+
+    // New ML/analytics fields
+    @Column(precision = 10, scale = 2)
+    private BigDecimal paymentAmount = BigDecimal.ZERO;
+
+    @Column(length = 50)
+    private String registrationSource; // e.g., LISTING, EMAIL, SOCIAL, REFERRAL
+
+    @Column(length = 50)
+    private String referralCode;
+
+    private LocalDateTime viewedAt; // when user viewed listing (helps compute CTR)
+    private LocalDateTime clickedAt; // when user clicked register
 }

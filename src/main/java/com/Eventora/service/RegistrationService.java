@@ -94,4 +94,23 @@ public class RegistrationService {
         }
         return RegistrationStatus.NONE;
     }
+
+    public void checkInToEvent(Long eventId) throws Exception,ResponseStatusException {
+        String userEmail = applicationContextUtils.getLoggedUserEmail();
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new Exception("Event not found"));
+        AppUser user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new Exception("User not found"));
+
+        Registration registration = registrationRepository.findByEventAndUser(event, user)
+                .orElseThrow(() -> new Exception("Registration not found"));
+
+        if(registration.getStatus() != RegistrationStatus.REGISTERED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"User is not registered for the event");
+        }
+
+        event.setCheckedInCount(event.getCheckedInCount() + 1);
+        registration.setStatus(RegistrationStatus.CHECKED_IN);
+        registrationRepository.save(registration);
+    }
 }

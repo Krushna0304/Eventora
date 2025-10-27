@@ -13,7 +13,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -28,3 +28,15 @@ spring:
 
 server:
   port: 8080
+
+ml:
+  service:
+    url: http://localhost:5000
+    connection-timeout: 10000
+    read-timeout: 30000
+    enabled: true
+    model-name: event_success_v2
+    model-version: 2.0.0
+    cache-duration-hours: 24
+
+

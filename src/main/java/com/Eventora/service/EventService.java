@@ -30,6 +30,7 @@ public class EventService {
     private final AppUserRepository appUserRepository;
     private final EventUtils eventUtils;
     private final ApplicationContextUtils applicationContextUtils;
+    private final RestAPIService restAPIService;
 
     public EventDetailDto createEvent(CreateEventDto createEventDto, MultipartFile file) throws Exception {
         String email = applicationContextUtils.getLoggedUserEmail();
@@ -57,11 +58,39 @@ public class EventService {
                 .eventStatus(createEventDto.eventStatus() != null ? createEventDto.eventStatus() : EventStatus.UPCOMING)
                 .organizer(organizer)
                 .currentParticipants(0)
+                .impressions(0)
+                .clicks(0)
+                .promotionSpend(createEventDto.promotionSpend() != null ? createEventDto.promotionSpend() : Integer.valueOf(0))
+                .socialMentions(createEventDto.socialMentions() != null ? createEventDto.socialMentions() : 0)
+                .cityCategory(restAPIService.classifyCity(createEventDto.city()))
+                .avgPastAttendanceRate(calcuateAvgPastAttendanceRate())
+                .organizerReputation(calcuateAvgPastAttendanceRate())
                 .build();
 
         // Save to repository
         eventRepository.save(event);
         return eventUtils.mapToEventDetailDto(event, RegistrationStatus.NONE);
+    }
+
+    public Double calcuateAvgPastAttendanceRate()
+    {
+        String email = applicationContextUtils.getLoggedUserEmail();
+        AppUser organizer = appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Logged-in user not found"));
+        List<Event> pastEvents = eventRepository.findByOrganizerAndEndDateBefore(organizer,java.time.LocalDateTime.now());
+        if(pastEvents.isEmpty())
+            return 0.0;
+        double totalAttendees =0.0;
+        double maxParticipants=0.0;
+        for(Event event: pastEvents)
+        {
+            if(event.getMaxParticipants()==0)
+                continue;
+            totalAttendees += (double)event.getCheckedInCount();
+            maxParticipants += (double)event.getMaxParticipants();
+
+        }
+        return totalAttendees/maxParticipants;
     }
     public List<EventTemplate> getFilteredEvents(EventFilterRequest filter) {
 //        List<Event> events = eventRepository.findAll();
@@ -112,7 +141,10 @@ public class EventService {
             return cb.and(predicates.toArray(new Predicate[0]));
         });
 
-
+        for(Event event: events) {
+            event.setImpressions(event.getImpressions()+1);
+        }
+        eventRepository.saveAll(events);
         // Convert to EventTemplate DTOs
         return eventUtils.extractEventTemplates(events);
     }
@@ -127,7 +159,7 @@ public class EventService {
                     .orElseThrow(() -> new Exception("User not found"));
             userStatus = registrationService.checkIsUserRegisteredForEvent(event,appUser);
         }
-
+        event.setClicks(event.getClicks()+1);
         return eventUtils.mapToEventDetailDto(event,userStatus);
     }
     public void deleteEvent(Long eventId) throws Exception {
@@ -140,10 +172,6 @@ public class EventService {
         eventRepository.delete(event.get(0));
     }
 
-    public List<String> predictEventSuccessAndGetRecommendations()
-    {
-        return null;
-    }
 
     public EventDetailDto modifyEvent(Long eventId, CreateEventDto updatedEventDto, MultipartFile file) throws Exception
     {
@@ -176,6 +204,8 @@ public class EventService {
                 ;event.setOrganizer(organizer)
                 ;event.setCurrentParticipants(0)
                 ;
+            event.setPromotionSpend(updatedEventDto.promotionSpend() != null ? updatedEventDto.promotionSpend() : 0);
+            event.setSocialMentions(updatedEventDto.socialMentions() != null ? updatedEventDto.socialMentions() : 0);
 
         // Save to repository
         eventRepository.save(event);
