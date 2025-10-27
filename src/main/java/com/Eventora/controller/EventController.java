@@ -30,6 +30,8 @@ public class EventController {
         }
     }
 
+
+
     @PostMapping("/getByFilter")
     public ResponseEntity<?> filterEvents(@RequestBody EventFilterRequest filterRequest) {
        try{
@@ -54,16 +56,16 @@ public class EventController {
     public ResponseEntity<?> deleteEvent(@PathVariable Long eventId) {
         try {
             eventService.deleteEvent(eventId);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/update")
-    public ResponseEntity<EventDetailDto> modifyEvent(@RequestBody CreateEventDto createEventDto, @RequestParam("poster")MultipartFile file) {
+    @PostMapping("/update/{eventId}")
+    public ResponseEntity<EventDetailDto> modifyEvent(@PathVariable  Long eventId,@RequestBody CreateEventDto updatedEventDto, @RequestParam("poster")MultipartFile file) {
         try {
-            EventDetailDto modifyEvent = eventService.createEvent(createEventDto,file);
+            EventDetailDto modifyEvent = eventService.modifyEvent(eventId,updatedEventDto,file);
             return ResponseEntity.ok(modifyEvent);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();

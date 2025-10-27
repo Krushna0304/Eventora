@@ -32,7 +32,7 @@ public class EventService {
     private final ApplicationContextUtils applicationContextUtils;
 
     public EventDetailDto createEvent(CreateEventDto createEventDto, MultipartFile file) throws Exception {
-        String email = "test@gmail.com";
+        String email = applicationContextUtils.getLoggedUserEmail();
         AppUser organizer = appUserRepository.findByEmail(email)
                 .orElseThrow(() -> new Exception("Logged-in user not found"));
 
@@ -64,6 +64,7 @@ public class EventService {
         return eventUtils.mapToEventDetailDto(event, RegistrationStatus.NONE);
     }
     public List<EventTemplate> getFilteredEvents(EventFilterRequest filter) {
+//        List<Event> events = eventRepository.findAll();
 
         List<Event> events = eventRepository.findAll((root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -111,17 +112,16 @@ public class EventService {
             return cb.and(predicates.toArray(new Predicate[0]));
         });
 
+
         // Convert to EventTemplate DTOs
         return eventUtils.extractEventTemplates(events);
     }
-
-
     public EventDetailDto getEventById(Long eventId) throws Exception {
         Event event =eventRepository.findById(eventId)
                 .orElseThrow(() -> new Exception("Event not found with id: " + eventId));
         String email = applicationContextUtils.getLoggedUserEmail();
         RegistrationStatus userStatus = RegistrationStatus.NONE;
-        if(!email.isEmpty())
+        if(email.equals("anonymousUser")==false)
         {
             AppUser appUser = appUserRepository.findByEmail(email)
                     .orElseThrow(() -> new Exception("User not found"));
@@ -131,10 +131,55 @@ public class EventService {
         return eventUtils.mapToEventDetailDto(event,userStatus);
     }
     public void deleteEvent(Long eventId) throws Exception {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new Exception("Event not found with id: " + eventId));
-        eventRepository.delete(event);
+        AppUser appUser = appUserRepository.findByEmail(applicationContextUtils.getLoggedUserEmail())
+                .orElseThrow(() -> new Exception("Logged-in user not found"));
+        List<Event> event = eventRepository.findByIdAndOrganizer(eventId,appUser);
+        if(event.isEmpty()) {
+            throw new Exception("Event not found or you are not the organizer");
+        }
+        eventRepository.delete(event.get(0));
     }
 
+    public List<String> predictEventSuccessAndGetRecommendations()
+    {
+        return null;
+    }
 
+    public EventDetailDto modifyEvent(Long eventId, CreateEventDto updatedEventDto, MultipartFile file) throws Exception
+    {
+        String email = applicationContextUtils.getLoggedUserEmail();
+        AppUser organizer = appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new Exception("Logged-in user not found"));
+        List<Event> events = eventRepository.findByIdAndOrganizer(eventId,organizer);
+        if(events.isEmpty()) {
+            throw new Exception("Event not found or you are not the organizer");
+        }
+        // Build Event entity from DTO
+        String fileUrl = file == null ? updatedEventDto.imageUrl(): awss3Service.uploadFile(file);
+        Event event = events.get(0);
+                 event.setTitle(updatedEventDto.title())
+                ;event.setDescription(updatedEventDto.description())
+                ;event.setEventCategory(updatedEventDto.eventCategory())
+                ;event.setLocationName(updatedEventDto.locationName())
+                ;event.setCity(updatedEventDto.city())
+                ;event.setState(updatedEventDto.state())
+                ;event.setCountry(updatedEventDto.country())
+                ;event.setLatitude(updatedEventDto.latitude())
+                ;event.setLongitude(updatedEventDto.longitude())
+                ;event.setStartDate(updatedEventDto.startDate())
+                ;event.setEndDate(updatedEventDto.endDate())
+                ;event.setMaxParticipants(updatedEventDto.maxParticipants())
+                ;event.setPrice(updatedEventDto.price() != null ? updatedEventDto.price() : BigDecimal.ZERO)
+                ;event.setImageUrl(fileUrl)
+                ;event.setTags(updatedEventDto.tags())
+                ;event.setEventStatus(updatedEventDto.eventStatus() != null ? updatedEventDto.eventStatus() : EventStatus.UPCOMING)
+                ;event.setOrganizer(organizer)
+                ;event.setCurrentParticipants(0)
+                ;
+
+        // Save to repository
+        eventRepository.save(event);
+        return eventUtils.mapToEventDetailDto(event, RegistrationStatus.NONE);
+
+    }
 }

@@ -1,5 +1,6 @@
 package com.Eventora.repository;
 
+import com.Eventora.entity.AppUser;
 import com.Eventora.entity.Event;
 import com.Eventora.entity.enums.EventCategory;
 import com.Eventora.entity.enums.EventStatus;
@@ -18,7 +19,7 @@ public interface EventRepository extends JpaRepository<Event, Long> , JpaSpecifi
     List<Event> findByCityIgnoreCase(String city);
     List<Event> findByCityIgnoreCaseAndEventCategory(String city, EventCategory category);
     List<Event> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
-
+    List<Event> findByIdAndOrganizer(Long eventId,AppUser appUser);
 
     @Query("SELECT e FROM Event e JOIN e.tags t WHERE LOWER(t) = LOWER(:tag)")
     List<Event> findByTag(@Param("tag") String tag);

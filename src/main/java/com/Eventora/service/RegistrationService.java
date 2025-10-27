@@ -9,7 +9,9 @@ import com.Eventora.repository.EventRepository;
 import com.Eventora.repository.AppUserRepository;
 import com.Eventora.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +26,7 @@ public class RegistrationService {
     private final ApplicationContextUtils applicationContextUtils;
     private final EventUtils eventUtils;
 
-    public void registerUserForEvent(Long eventId) throws Exception {
+    public void registerUserForEvent(Long eventId) throws Exception,ResponseStatusException {
         String userEmail = applicationContextUtils.getLoggedUserEmail();
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new Exception("Event not found"));
@@ -32,11 +34,11 @@ public class RegistrationService {
                 .orElseThrow(() -> new Exception("User not found"));
 
         if (registrationRepository.findByEventAndUser(event, user).isPresent()) {
-            throw new Exception("User already registered for this event");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"User registered only once for the event");
         }
 
         if (event.getCurrentParticipants() >= event.getMaxParticipants()) {
-            throw new Exception("Event capacity full");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Event capacity full");
         }
 
         Registration registration = Registration.builder()
@@ -54,7 +56,7 @@ public class RegistrationService {
 
     //Discussed with mentor, changed method name to getRegisteredEvents
     public List<EventTemplate> getRegisteredEvents() throws Exception {
-        String userEmail = applicationContextUtils.getLoggedUserEmail();
+     String userEmail = applicationContextUtils.getLoggedUserEmail();
         AppUser user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new Exception("User not found"));
         List<Registration> registrations = registrationRepository.findByUserAndStatus(user,RegistrationStatus.REGISTERED);
@@ -64,7 +66,8 @@ public class RegistrationService {
         return eventUtils.extractEventTemplates(registeredEvents);
     }
 
-    public void cancelRegistration(Long eventId) throws Exception {
+
+    public void cancelRegistration(Long eventId) throws Exception,ResponseStatusException {
         String userEmail = applicationContextUtils.getLoggedUserEmail();
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new Exception("Event not found"));
@@ -74,6 +77,9 @@ public class RegistrationService {
         Registration registration = registrationRepository.findByEventAndUser(event, user)
                 .orElseThrow(() -> new Exception("Registration not found"));
 
+        if(registration.getStatus() == RegistrationStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Registration already cancelled");
+        }
         registration.setStatus(RegistrationStatus.CANCELLED);
         registrationRepository.save(registration);
 
