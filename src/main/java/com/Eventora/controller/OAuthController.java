@@ -8,10 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import java.util.*;
 
@@ -49,6 +46,8 @@ public class OAuthController {
     @GetMapping("/google/code")
     public ResponseEntity<?> handleGoogleCallback(@RequestParam String code) {
         try {
+            System.out.println("Received Google OAuth callback with code: " + code.substring(0, Math.min(10, code.length())) + "...");
+
             // Exchange code for access token
             String tokenEndpoint = "https://oauth2.googleapis.com/token";
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -62,37 +61,58 @@ public class OAuthController {
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
+            System.out.println("Exchanging code for token...");
             ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenEndpoint, request, Map.class);
 
             if (tokenResponse.getStatusCode() != HttpStatus.OK || tokenResponse.getBody() == null) {
+                System.err.println("Failed to get token response");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("message", "Failed to exchange code for token"));
             }
 
-            String idToken = (String) tokenResponse.getBody().get("id_token");
+            String accessToken = (String) tokenResponse.getBody().get("access_token");
+            System.out.println("Successfully received access token");
 
-            // Get user info from ID token
-            String userInfoUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
-            ResponseEntity<Map> userInfoResponse = restTemplate.getForEntity(userInfoUrl, Map.class);
+            // Get user info using access token (more reliable than id_token validation)
+            String userInfoUrl = "https://www.googleapis.com/oauth2/v2/userinfo";
+            HttpHeaders userHeaders = new HttpHeaders();
+            userHeaders.setBearerAuth(accessToken);
+            HttpEntity<?> userRequest = new HttpEntity<>(userHeaders);
+
+            ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
+                    userInfoUrl, HttpMethod.GET, userRequest, Map.class
+            );
 
             if (userInfoResponse.getStatusCode() == HttpStatus.OK && userInfoResponse.getBody() != null) {
                 Map<String, Object> userInfo = userInfoResponse.getBody();
                 String email = (String) userInfo.get("email");
                 String name = (String) userInfo.get("name");
 
+                System.out.println("Retrieved user info for: " + email);
+
+                if (email == null || email.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("message", "Email not provided by Google"));
+                }
+
                 // Check if user exists, if not create new user
-                if (!appUserRepository.findByEmail(email).isPresent()) {
+                Optional<AppUser> existingUser = appUserRepository.findByEmail(email);
+                if (!existingUser.isPresent()) {
+                    System.out.println("Creating new user: " + email);
                     appUserRepository.save(
                             AppUser.builder()
                                     .email(email)
-                                    .displayName(name)
+                                    .displayName(name != null ? name : email.split("@")[0])
                                     .password(UUID.randomUUID().toString()) // Random password for OAuth users
                                     .build()
                     );
+                } else {
+                    System.out.println("User already exists: " + email);
                 }
 
                 // Generate JWT token
                 String token = jwtUtils.generateToken(email);
+                System.out.println("Generated JWT token successfully");
                 return ResponseEntity.ok(Map.of("token", token));
             }
 
@@ -100,9 +120,17 @@ public class OAuthController {
                     .body(Map.of("message", "Failed to retrieve user information"));
 
         } catch (Exception e) {
+            System.err.println("Google OAuth error: " + e.getMessage());
             e.printStackTrace();
+
+            // Return more specific error message
+            String errorMessage = "OAuth authentication failed";
+            if (e.getMessage() != null && e.getMessage().contains("invalid_grant")) {
+                errorMessage = "Authorization code expired or already used. Please try again.";
+            }
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "OAuth authentication failed: " + e.getMessage()));
+                    .body(Map.of("message", errorMessage + ": " + e.getMessage()));
         }
     }
 
@@ -131,6 +159,11 @@ public class OAuthController {
 
             String accessToken = (String) tokenResponse.getBody().get("access_token");
 
+            if (accessToken == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Access token not received from GitHub"));
+            }
+
             // Get user info
             String userInfoUrl = "https://api.github.com/user";
             HttpHeaders userHeaders = new HttpHeaders();
@@ -152,12 +185,25 @@ public class OAuthController {
                             emailUrl, HttpMethod.GET, userRequest, List.class
                     );
                     if (emailResponse.getBody() != null && !emailResponse.getBody().isEmpty()) {
-                        Map<String, Object> primaryEmail = (Map<String, Object>) emailResponse.getBody().stream()
-                                .filter(e -> ((Map<String, Object>) e).get("primary").equals(true))
-                                .findFirst()
-                                .orElse(emailResponse.getBody().get(0));
-                        email = (String) primaryEmail.get("email");
+                        // Find primary email or use first one
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> emailList = (List<Map<String, Object>>) emailResponse.getBody();
+
+                        Optional<Map<String, Object>> primaryEmail = emailList.stream()
+                                .filter(e -> Boolean.TRUE.equals(e.get("primary")))
+                                .findFirst();
+
+                        if (primaryEmail.isPresent()) {
+                            email = (String) primaryEmail.get().get("email");
+                        } else {
+                            email = (String) emailList.get(0).get("email");
+                        }
                     }
+                }
+
+                if (email == null || email.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("message", "Email not provided by GitHub. Please make your email public."));
                 }
 
                 String name = (String) userInfo.get("name");
@@ -166,11 +212,12 @@ public class OAuthController {
                 }
 
                 // Check if user exists
-                if (!appUserRepository.findByEmail(email).isPresent()) {
+                Optional<AppUser> existingUser = appUserRepository.findByEmail(email);
+                if (!existingUser.isPresent()) {
                     appUserRepository.save(
                             AppUser.builder()
                                     .email(email)
-                                    .displayName(name)
+                                    .displayName(name != null ? name : email.split("@")[0])
                                     .password(UUID.randomUUID().toString())
                                     .build()
                     );
@@ -190,7 +237,7 @@ public class OAuthController {
         }
     }
 
-    @GetMapping("/linkedIn/code")
+    @GetMapping("/linkedin/code")
     public ResponseEntity<?> handleLinkedInCallback(@RequestParam String code) {
         try {
             // Exchange code for access token
@@ -215,43 +262,81 @@ public class OAuthController {
 
             String accessToken = (String) tokenResponse.getBody().get("access_token");
 
-            // Get user email
-            String emailUrl = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))";
+            if (accessToken == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Access token not received from LinkedIn"));
+            }
+
             HttpHeaders userHeaders = new HttpHeaders();
             userHeaders.setBearerAuth(accessToken);
             HttpEntity<?> userRequest = new HttpEntity<>(userHeaders);
 
+            // Get user email using correct API v2 endpoint
+            String emailUrl = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))";
             ResponseEntity<Map> emailResponse = restTemplate.exchange(
                     emailUrl, HttpMethod.GET, userRequest, Map.class
             );
 
-            // Get user profile
+            // Get user profile using correct API v2 endpoint
             String profileUrl = "https://api.linkedin.com/v2/me";
             ResponseEntity<Map> profileResponse = restTemplate.exchange(
                     profileUrl, HttpMethod.GET, userRequest, Map.class
             );
 
             if (emailResponse.getStatusCode() == HttpStatus.OK &&
-                    profileResponse.getStatusCode() == HttpStatus.OK) {
+                    profileResponse.getStatusCode() == HttpStatus.OK &&
+                    emailResponse.getBody() != null &&
+                    profileResponse.getBody() != null) {
 
                 Map<String, Object> emailData = emailResponse.getBody();
                 Map<String, Object> profileData = profileResponse.getBody();
 
-                // Extract email
-                List<Map<String, Object>> elements = (List<Map<String, Object>>) emailData.get("elements");
+                // Extract email from response
                 String email = null;
+                List<Map<String, Object>> elements = (List<Map<String, Object>>) emailData.get("elements");
                 if (elements != null && !elements.isEmpty()) {
-                    Map<String, Object> handle = (Map<String, Object>) elements.get(0).get("handle~");
-                    email = (String) handle.get("emailAddress");
+                    Map<String, Object> handleObj = (Map<String, Object>) elements.get(0).get("handle~");
+                    if (handleObj != null) {
+                        email = (String) handleObj.get("emailAddress");
+                    }
                 }
 
-                // Extract name
-                String firstName = (String) ((Map<String, Object>) profileData.get("localizedFirstName")).get("localized");
-                String lastName = (String) ((Map<String, Object>) profileData.get("localizedLastName")).get("localized");
-                String name = firstName + " " + lastName;
+                if (email == null || email.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("message", "Email not provided by LinkedIn"));
+                }
+
+                // Extract name from profile
+                String firstName = "";
+                String lastName = "";
+
+                Map<String, Object> localizedFirstName = (Map<String, Object>) profileData.get("localizedFirstName");
+                Map<String, Object> localizedLastName = (Map<String, Object>) profileData.get("localizedLastName");
+
+                if (localizedFirstName != null) {
+                    firstName = (String) localizedFirstName.getOrDefault("localized", "");
+                    // If localized is a map with language key
+                    if (firstName.isEmpty() && localizedFirstName.get("en_US") != null) {
+                        firstName = (String) localizedFirstName.get("en_US");
+                    }
+                }
+
+                if (localizedLastName != null) {
+                    lastName = (String) localizedLastName.getOrDefault("localized", "");
+                    // If localized is a map with language key
+                    if (lastName.isEmpty() && localizedLastName.get("en_US") != null) {
+                        lastName = (String) localizedLastName.get("en_US");
+                    }
+                }
+
+                String name = (firstName + " " + lastName).trim();
+                if (name.isEmpty()) {
+                    name = email.split("@")[0];
+                }
 
                 // Check if user exists
-                if (!appUserRepository.findByEmail(email).isPresent()) {
+                Optional<AppUser> existingUser = appUserRepository.findByEmail(email);
+                if (!existingUser.isPresent()) {
                     appUserRepository.save(
                             AppUser.builder()
                                     .email(email)

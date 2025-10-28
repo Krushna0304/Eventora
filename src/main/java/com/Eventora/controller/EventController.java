@@ -2,13 +2,15 @@ package com.Eventora.controller;
 import com.Eventora.dto.CreateEventDto;
 import com.Eventora.dto.EventDetailDto;
 import com.Eventora.dto.EventFilterRequest;
+import com.Eventora.dto.EventTemplate;
 import com.Eventora.service.EventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.web.server.ResponseStatusException;
+import java.util.List;
 @RestController
 @RequestMapping("/public/api/events")
 @RequiredArgsConstructor
@@ -27,6 +29,19 @@ public class EventController {
             return ResponseEntity.badRequest().build();
         } catch (Throwable e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @GetMapping("/getByNameAndOrganizer")
+    public ResponseEntity<?> getByNameAndOrganizer(@RequestParam(name = "eventName",required = false) String eventName, @RequestParam(name = "organizerName",required = false)String organizerName,@RequestParam(name = "isMyEventList",required = false) Boolean isMyEventList)
+    {
+        try{
+            List<EventTemplate> events = eventService.findEventByNameAndOrganizer(eventName,organizerName,isMyEventList);
+            return new ResponseEntity<>(events, HttpStatus.FOUND) ;
+        }catch(ResponseStatusException exception){
+            return new ResponseEntity<>(exception.getReason(), HttpStatus.NOT_FOUND) ;
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
@@ -50,10 +65,20 @@ public class EventController {
            }
     }
 
-    @DeleteMapping("/delete/{eventId}")
-    public ResponseEntity<?> deleteEvent(@PathVariable Long eventId) {
+    @PutMapping ("/cancel/{eventId}")
+    public ResponseEntity<?> cancelEvent(@PathVariable Long eventId) {
         try {
-            eventService.deleteEvent(eventId);
+            eventService.cancelEvent(eventId);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/schedule/{eventId}")
+    public ResponseEntity<?> scheduleEvent(@PathVariable Long eventId) {
+        try {
+            eventService.scheduleEvent(eventId);
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -61,14 +86,28 @@ public class EventController {
     }
 
     @PostMapping("/update/{eventId}")
-    public ResponseEntity<EventDetailDto> modifyEvent(@PathVariable  Long eventId,@RequestBody CreateEventDto updatedEventDto, @RequestParam("poster")MultipartFile file) {
+    public ResponseEntity<EventDetailDto> modifyEvent(@PathVariable  Long eventId,@RequestBody CreateEventDto updatedEventDto) {
         try {
+            MultipartFile file = null;
             EventDetailDto modifyEvent = eventService.modifyEvent(eventId,updatedEventDto,file);
             return ResponseEntity.ok(modifyEvent);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         } catch (Throwable e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @GetMapping("/getByNameOrganiserByMe")
+    public ResponseEntity<?> getEventByNameOrganiserByMe(@RequestParam(name ="eventName",required = false) String eventName)
+    {
+        try{
+            List<EventTemplate> events = eventService.getEventByNameOrganiserByMe(eventName);
+            return new ResponseEntity<>(events, HttpStatus.FOUND) ;
+        }catch(ResponseStatusException exception){
+            return new ResponseEntity<>(exception.getReason(), HttpStatus.NOT_FOUND) ;
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 }

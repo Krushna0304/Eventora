@@ -19,6 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,6 +61,7 @@ public class EventService {
                 .organizer(organizer)
                 .currentParticipants(0)
                 .impressions(0)
+                .checkedInCount(0)
                 .clicks(0)
                 .promotionSpend(createEventDto.promotionSpend() != null ? createEventDto.promotionSpend() : Integer.valueOf(0))
                 .socialMentions(createEventDto.socialMentions() != null ? createEventDto.socialMentions() : 0)
@@ -72,8 +75,7 @@ public class EventService {
         return eventUtils.mapToEventDetailDto(event, RegistrationStatus.NONE);
     }
 
-    public Double calcuateAvgPastAttendanceRate()
-    {
+    public Double calcuateAvgPastAttendanceRate() {
         String email = applicationContextUtils.getLoggedUserEmail();
         AppUser organizer = appUserRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Logged-in user not found"));
@@ -92,8 +94,24 @@ public class EventService {
         }
         return totalAttendees/maxParticipants;
     }
+
+    public List<EventTemplate> findEventByNameAndOrganizer(String eventName, String organizerName,Boolean isMyList) throws Exception {
+        boolean fetchMyList = Boolean.TRUE.equals(isMyList);
+        if(fetchMyList){
+        List<EventTemplate> myEvents = registrationService.getRegisteredEvents();
+            myEvents = myEvents.stream().filter(e->
+                    (eventName ==null || eventName.isEmpty() ||
+                            e.getTitle().toLowerCase().contains(eventName.toLowerCase())) &&
+                            (organizerName == null || organizerName.isEmpty() ||
+                                    e.getOrganizerName().toLowerCase().contains(organizerName.toLowerCase())))
+                    .collect(Collectors.toList());
+            return myEvents;
+        }
+        List<Event> events = eventRepository.searchEvents(eventName, organizerName);
+        return eventUtils.extractEventTemplates(events);
+    }
+
     public List<EventTemplate> getFilteredEvents(EventFilterRequest filter) {
-//        List<Event> events = eventRepository.findAll();
 
         List<Event> events = eventRepository.findAll((root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -148,6 +166,7 @@ public class EventService {
         // Convert to EventTemplate DTOs
         return eventUtils.extractEventTemplates(events);
     }
+
     public EventDetailDto getEventById(Long eventId) throws Exception {
         Event event =eventRepository.findById(eventId)
                 .orElseThrow(() -> new Exception("Event not found with id: " + eventId));
@@ -162,19 +181,30 @@ public class EventService {
         event.setClicks(event.getClicks()+1);
         return eventUtils.mapToEventDetailDto(event,userStatus);
     }
-    public void deleteEvent(Long eventId) throws Exception {
+
+    public void cancelEvent(Long eventId) throws Exception {
         AppUser appUser = appUserRepository.findByEmail(applicationContextUtils.getLoggedUserEmail())
                 .orElseThrow(() -> new Exception("Logged-in user not found"));
         List<Event> event = eventRepository.findByIdAndOrganizer(eventId,appUser);
         if(event.isEmpty()) {
             throw new Exception("Event not found or you are not the organizer");
         }
-        eventRepository.delete(event.get(0));
+        event.get(0).setEventStatus(EventStatus.CANCELLED);
+        eventRepository.saveAll(event);
     }
 
+    public void scheduleEvent(Long eventId) throws Exception {
+        AppUser appUser = appUserRepository.findByEmail(applicationContextUtils.getLoggedUserEmail())
+                .orElseThrow(() -> new Exception("Logged-in user not found"));
+        List<Event> event = eventRepository.findByIdAndOrganizer(eventId,appUser);
+        if(event.isEmpty()) {
+            throw new Exception("Event not found or you are not the organizer");
+        }
+        event.get(0).setEventStatus(EventStatus.SCHEDULED);
+        eventRepository.saveAll(event);
+    }
 
-    public EventDetailDto modifyEvent(Long eventId, CreateEventDto updatedEventDto, MultipartFile file) throws Exception
-    {
+    public EventDetailDto modifyEvent(Long eventId, CreateEventDto updatedEventDto, MultipartFile file) throws Exception {
         String email = applicationContextUtils.getLoggedUserEmail();
         AppUser organizer = appUserRepository.findByEmail(email)
                 .orElseThrow(() -> new Exception("Logged-in user not found"));
@@ -210,6 +240,21 @@ public class EventService {
         // Save to repository
         eventRepository.save(event);
         return eventUtils.mapToEventDetailDto(event, RegistrationStatus.NONE);
-
     }
+
+    public List<EventTemplate> getEventByNameOrganiserByMe(String eventName) throws Exception {
+        AppUser organizer = appUserRepository.findByEmail(applicationContextUtils.getLoggedUserEmail())
+                .orElseThrow(() -> new Exception("Organizer not found"));
+        List<Event> organizerEvents = eventRepository.findByOrganizer(organizer);
+        List <EventTemplate> myEvents =  eventUtils.extractEventTemplates(organizerEvents);
+        List<EventTemplate> filterdEvents = myEvents;
+        if(eventName!=null && !eventName.isEmpty()){
+            filterdEvents = myEvents.stream().filter(e->
+                    (eventName ==null || eventName.isEmpty() ||
+                            e.getTitle().toLowerCase().contains(eventName.toLowerCase())))
+                    .collect(Collectors.toList());;
+        }
+        return filterdEvents;
+    }
+
 }

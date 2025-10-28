@@ -23,7 +23,7 @@ public interface EventRepository extends JpaRepository<Event, Long> , JpaSpecifi
     List<Event> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
     List<Event> findByIdAndOrganizer(Long eventId,AppUser appUser);
     List<Event> findByOrganizerAndEndDateBefore(AppUser organizer, LocalDateTime dateTime);
-
+    List<Event> findByOrganizer(AppUser organizer);
     @Query("SELECT e FROM Event e JOIN e.tags t WHERE LOWER(t) = LOWER(:tag)")
     List<Event> findByTag(@Param("tag") String tag);
 
@@ -36,4 +36,19 @@ public interface EventRepository extends JpaRepository<Event, Long> , JpaSpecifi
     List<Event> findByStartDateBetween(LocalDateTime start, LocalDateTime end);
     List<Event> findByCityIgnoreCaseAndEventCategoryAndEventStatus(
             String city, EventCategory category, EventStatus status);
+
+    @Query("""
+    SELECT e FROM Event e
+    WHERE 
+      (:eventName IS NULL OR :eventName = '' 
+          OR LOWER(e.title) LIKE LOWER(CONCAT('%', :eventName, '%')))
+    AND 
+      (:organizerName IS NULL OR :organizerName = '' 
+          OR LOWER(e.organizer.displayName) LIKE LOWER(CONCAT('%', :organizerName, '%')))
+    """)
+    List<Event> searchEvents(@Param("eventName") String eventName,
+                             @Param("organizerName") String organizerName);
+
+
+
 }

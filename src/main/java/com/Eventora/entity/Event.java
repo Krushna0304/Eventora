@@ -3,7 +3,9 @@ package com.Eventora.entity;
 import com.Eventora.entity.enums.EventCategory;
 import com.Eventora.entity.enums.EventStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.*;
+import org.hibernate.annotations.Check;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -26,6 +28,7 @@ import java.util.List;
                 @Index(name = "idx_event_status", columnList = "eventStatus"),
                 @Index(name = "idx_event_location", columnList = "latitude, longitude")
         }
+
 )
 public class Event {
 
@@ -42,6 +45,7 @@ public class Event {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private EventCategory eventCategory;
+
 
     @Column(nullable = false)
     private String locationName;
@@ -90,6 +94,7 @@ public class Event {
     @Column(nullable = true)
     private LocalDateTime postedAt;
 
+    @Min(0)
     @Column(nullable = true)
     private Integer postedDaysBeforeEvent;
 

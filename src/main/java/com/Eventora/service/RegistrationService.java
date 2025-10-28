@@ -4,6 +4,7 @@ import com.Eventora.Utils.ApplicationContextUtils;
 import com.Eventora.Utils.EventUtils;
 import com.Eventora.dto.EventTemplate;
 import com.Eventora.entity.*;
+import com.Eventora.entity.enums.EventStatus;
 import com.Eventora.entity.enums.RegistrationStatus;
 import com.Eventora.repository.EventRepository;
 import com.Eventora.repository.AppUserRepository;
@@ -35,6 +36,10 @@ public class RegistrationService {
 
         if (registrationRepository.findByEventAndUser(event, user).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,"User registered only once for the event");
+        }
+
+        if(event.getEventStatus() != EventStatus.SCHEDULED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Cannot register for this event");
         }
 
         if (event.getCurrentParticipants() >= event.getMaxParticipants()) {
