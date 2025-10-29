@@ -135,9 +135,12 @@ public class Event {
     @Column(nullable = false, length = 50)
     private EventStatus eventStatus = EventStatus.UPCOMING;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizer_id", nullable = false)
     private AppUser organizer;
+
+    @Column(nullable = false)
+    private String organizerDisplayName;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -168,6 +171,10 @@ public class Event {
             this.revenue = price.multiply(BigDecimal.valueOf(checkedInCount));
         } else {
             this.revenue = BigDecimal.ZERO;
+        }
+
+        if(organizer.getDisplayName() != null){
+            this.organizerDisplayName = organizer.getDisplayName();
         }
     }
 

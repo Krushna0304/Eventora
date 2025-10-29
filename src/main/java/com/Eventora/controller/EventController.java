@@ -3,8 +3,10 @@ import com.Eventora.dto.CreateEventDto;
 import com.Eventora.dto.EventDetailDto;
 import com.Eventora.dto.EventFilterRequest;
 import com.Eventora.dto.EventTemplate;
+import com.Eventora.projection.EventTemplateProjection;
 import com.Eventora.service.EventService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,19 +33,28 @@ public class EventController {
             throw new RuntimeException(e);
         }
     }
-
     @GetMapping("/getByNameAndOrganizer")
-    public ResponseEntity<?> getByNameAndOrganizer(@RequestParam(name = "eventName",required = false) String eventName, @RequestParam(name = "organizerName",required = false)String organizerName,@RequestParam(name = "isMyEventList",required = false) Boolean isMyEventList)
+    public ResponseEntity<?> getByNameAndOrganizer(
+            @RequestParam(name = "eventName", required = false) String eventName,
+            @RequestParam(name = "organizerName", required = false) String organizerName,
+            @RequestParam(name = "isMyEventList", required = false, defaultValue = "false") Boolean isMyEventList,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size)
     {
-        try{
-            List<EventTemplate> events = eventService.findEventByNameAndOrganizer(eventName,organizerName,isMyEventList);
-            return new ResponseEntity<>(events, HttpStatus.FOUND) ;
-        }catch(ResponseStatusException exception){
-            return new ResponseEntity<>(exception.getReason(), HttpStatus.NOT_FOUND) ;
+        try {
+            Page<EventTemplate> events = eventService.findEventByNameAndOrganizer(
+                    eventName,organizerName,isMyEventList,page,size
+            );
+            return ResponseEntity.ok(events);
+        } catch (RuntimeException exception) {
+            exception.printStackTrace();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(exception.getMessage());
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while searching events");
         }
     }
+
 
     @PostMapping("/getByFilter")
     public ResponseEntity<?> filterEvents(@RequestBody EventFilterRequest filterRequest) {
@@ -99,15 +110,21 @@ public class EventController {
     }
 
     @GetMapping("/getByNameOrganiserByMe")
-    public ResponseEntity<?> getEventByNameOrganiserByMe(@RequestParam(name ="eventName",required = false) String eventName)
-    {
-        try{
-            List<EventTemplate> events = eventService.getEventByNameOrganiserByMe(eventName);
-            return new ResponseEntity<>(events, HttpStatus.FOUND) ;
-        }catch(ResponseStatusException exception){
-            return new ResponseEntity<>(exception.getReason(), HttpStatus.NOT_FOUND) ;
+    public ResponseEntity<?> getEventByNameOrganiserByMe(
+            @RequestParam(name = "eventName", required = false) String eventName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        try {
+            Page<EventTemplate> events = eventService.getEventByNameOrganiserByMe(
+                    eventName,page,size
+            ) ;
+            return ResponseEntity.ok(events);
+        } catch (ResponseStatusException exception) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getReason());
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error fetching events");
         }
     }
+
 }

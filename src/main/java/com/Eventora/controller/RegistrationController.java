@@ -74,4 +74,5 @@ public class RegistrationController {
     public ResponseEntity<String> hello() {
         return ResponseEntity.ok("Hello from RegistrationController");
     }
+
 }

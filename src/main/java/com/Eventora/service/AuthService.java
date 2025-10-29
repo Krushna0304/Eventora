@@ -60,9 +60,13 @@ public class AuthService {
     }
 
     public Map<String, String> getCurrentUserInfo() {
-        String email = applicationContextUtils.getLoggedUserEmail();
-        AppUser appUser = appUserRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (applicationContextUtils.getLoggedUser() == null)
+            throw new RuntimeException("No logged user found");
+
+        AppUser appUser = applicationContextUtils.getLoggedUser();
+
+
         Map <String, String> userInfo = Map.of(
                 "displayName", appUser.getDisplayName(),
                 "email", appUser.getEmail()

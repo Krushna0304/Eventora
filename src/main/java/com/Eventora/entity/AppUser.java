@@ -11,6 +11,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+//Created implicity due to unique and non null constraints on email
+//@Table(
+//        name = "app_user",
+//        indexes = {
+//                @Index(name = "idx_email", columnList = "email")
+//        }
+//)
 public class AppUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

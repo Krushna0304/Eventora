@@ -13,14 +13,13 @@ import lombok.Data;
 @ConfigurationProperties(prefix = "ml.service")
 @Data
 public class MLServiceConfig {
-    private String url = "http://localhost:5000";
-    private Integer connectionTimeout = 10000; // 10 seconds
-    private Integer readTimeout = 30000; // 30 seconds
-    private Boolean enabled = true;
-    private String modelName = "event_success_v2";
-    private String modelVersion = "2.0.0";
-    private Integer cacheDurationHours = 24; // Cache predictions for 24 hours
-
+    private String url;
+    private Integer connectionTimeout;
+    private Integer readTimeout;
+    private Boolean enabled;
+    private String modelName;
+    private String modelVersion;
+    private Integer cacheDurationHours;
     @Bean
     public RestTemplate mlRestTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();

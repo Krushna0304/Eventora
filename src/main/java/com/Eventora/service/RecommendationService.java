@@ -34,9 +34,12 @@ public class RecommendationService {
     }
     public List<EventTemplate> getRecommendedEvents()
     {
-        String email =  applicationContextUtils.getLoggedUserEmail();
-        Optional<AppUser> appUser = appUserRepository.findByEmail(email);
-        List<Registration> registrations = registrationRepository.findByUser(appUser.get());
+        if (applicationContextUtils.getLoggedUser() == null)
+            throw new RuntimeException("No logged user found");
+
+        AppUser appUser = applicationContextUtils.getLoggedUser();
+
+        List<Registration> registrations = registrationRepository.findByUser(appUser);
 //      List<Event> events = re;
 //      return eventUtils.extractEventTemplates(events);
         return null;
