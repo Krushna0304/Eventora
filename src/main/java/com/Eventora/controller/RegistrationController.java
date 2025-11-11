@@ -1,6 +1,5 @@
 package com.Eventora.controller;
 import com.Eventora.dto.EventTemplate;
-import com.Eventora.entity.Registration;
 import com.Eventora.service.EventService;
 import com.Eventora.service.RegistrationService;
 import lombok.RequiredArgsConstructor;
@@ -55,14 +54,17 @@ public class RegistrationController {
         }
     }
 
-    @PostMapping("/predictSuccess")
-    public ResponseEntity<?> predictSuccess()
-    {
-        try{
-            return ResponseEntity.ok(eventService.predictEventSuccessAndGetRecommendations());
-        }catch(Exception ex)
-        {
-            return ResponseEntity.badRequest().body("Prediction failed");
+    @PutMapping("/check-In/{eventId}")
+    public ResponseEntity<String> checkInToEvent(@PathVariable Long eventId) {
+        try {
+            registrationService.checkInToEvent(eventId);
+            return ResponseEntity.ok("Checked in successfully");
+        } catch (ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(ex.getReason());
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            return ResponseEntity.badRequest().body(errorMessage);
         }
     }
 
@@ -70,4 +72,5 @@ public class RegistrationController {
     public ResponseEntity<String> hello() {
         return ResponseEntity.ok("Hello from RegistrationController");
     }
+
 }

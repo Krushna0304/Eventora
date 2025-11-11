@@ -3,10 +3,7 @@ package com.Eventora.dto;
 import com.Eventora.entity.enums.EventCategory;
 import com.Eventora.entity.enums.EventStatus;
 import com.Eventora.entity.enums.RegistrationStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,7 +16,7 @@ import java.util.List;
 public class EventDetailDto {
     private Long id;
     private String title;
-    private String organizerName;
+    private String organizerDisplayName;
     private String description;
     private EventCategory eventCategory;
     private String locationName;
