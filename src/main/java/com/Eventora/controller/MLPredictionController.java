@@ -1,11 +1,9 @@
-
 package com.Eventora.controller;
 
 import com.Eventora.dto.PredictionResult;
 import com.Eventora.entity.Event;
 import com.Eventora.repository.EventRepository;
 import com.Eventora.service.MLPredictionService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

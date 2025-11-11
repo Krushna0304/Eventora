@@ -1,7 +1,5 @@
 package com.Eventora.controller;
 import com.Eventora.dto.EventTemplate;
-import com.Eventora.entity.Event;
-import com.Eventora.entity.Registration;
 import com.Eventora.service.EventService;
 import com.Eventora.service.RegistrationService;
 import lombok.RequiredArgsConstructor;

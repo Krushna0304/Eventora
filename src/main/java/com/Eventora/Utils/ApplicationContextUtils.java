@@ -17,7 +17,8 @@ public class ApplicationContextUtils {
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof String && principal.equals("anonymousUser")) {
-            throw new RuntimeException("Logged-in user not found");
+            return null;
+            //throw new RuntimeException("Logged-in user not found");
         }
 
         if (principal instanceof AppUser appUser) {

@@ -76,6 +76,7 @@ public interface EventRepository extends JpaRepository<Event, Long> , JpaSpecifi
     List<EventTemplate> findAllEventTemplates();
 
 
+    @Modifying
     @Query(
             """
                 UPDATE Event e

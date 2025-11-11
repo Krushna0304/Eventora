@@ -3,7 +3,6 @@ import com.Eventora.dto.CreateEventDto;
 import com.Eventora.dto.EventDetailDto;
 import com.Eventora.dto.EventFilterRequest;
 import com.Eventora.dto.EventTemplate;
-import com.Eventora.projection.EventTemplateProjection;
 import com.Eventora.service.EventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import java.util.List;
 @RestController
 @RequestMapping("/public/api/events")
 @RequiredArgsConstructor
