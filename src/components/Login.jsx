@@ -7,7 +7,7 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import { initiateGoogleLogin, initiateGithubLogin, initiateLinkedInLogin } from '../utils/oauth';
 import { authAPI } from '../services/api';
-import { STORAGE_KEYS, OAUTH_PROVIDERS } from '../config/constants';
+import { STORAGE_KEYS } from '../config/constants';
 
 const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -15,6 +15,12 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+
+    const spotlight = [
+        'Real-time attendance dashboards',
+        'One-click organiser workflows',
+        'Enterprise-grade OAuth security'
+    ];
 
     // Handle OAuth Callback
     useEffect(() => {
@@ -111,85 +117,103 @@ const Login = () => {
     };
 
     return (
-        <div className="login-container">
-            <div className="login-box">
-                <h2>Login to Eventora</h2>
-
-                {error && <div className="error-message">{error}</div>}
-                {loading && <div className="loading-message">Processing...</div>}
-
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="email">Email</label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            value={formData.email} 
-                            onChange={handleChange} 
-                            required 
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="password">Password</label>
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            value={formData.password} 
-                            onChange={handleChange} 
-                            required 
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <button type="submit" className="submit-button" disabled={loading}>
-                        {loading ? 'Logging in...' : 'Login'}
-                    </button>
-                </form>
-
-                <div className="social-login">
-                    <div className="divider"><span>OR</span></div>
-
-                    <Button 
-                        variant="outlined" 
-                        startIcon={<GoogleIcon />} 
-                        onClick={initiateGoogleLogin} 
-                        fullWidth 
-                        style={{ marginBottom: '10px' }}
-                        disabled={loading}
-                    >
-                        Continue with Google
-                    </Button>
-
-                    <Button 
-                        variant="outlined" 
-                        startIcon={<GitHubIcon />} 
-                        onClick={initiateGithubLogin} 
-                        fullWidth 
-                        style={{ marginBottom: '10px' }}
-                        disabled={loading}
-                    >
-                        Continue with GitHub
-                    </Button>
-
-                    <Button 
-                        variant="outlined" 
-                        startIcon={<LinkedInIcon />} 
-                        onClick={initiateLinkedInLogin} 
-                        fullWidth 
-                        style={{ marginBottom: '10px' }}
-                        disabled={loading}
-                    >
-                        Continue with LinkedIn
-                    </Button>
+        <div className="auth-page">
+            <div className="auth-card">
+                <div className="auth-panel auth-panel__intro">
+                    <p className="auth-eyebrow">Eventora OS</p>
+                    <h1>Welcome back.</h1>
+                    <p className="auth-lede">
+                        Reconnect with your control centre for immersive events, unified guest data, and actionable insights.
+                    </p>
+                    <ul className="auth-benefits">
+                        {spotlight.map((item) => (
+                            <li key={item}>{item}</li>
+                        ))}
+                    </ul>
                 </div>
 
-                <p className="register-link">
-                    Don't have an account? <a href="/register">Register here</a>
-                </p>
+                <div className="auth-panel auth-panel__form">
+                    <h2>Sign in to continue</h2>
+                    <p className="auth-form-subtitle">
+                        Access organiser dashboards, forecasts, and attendee pipelines in one place.
+                    </p>
+
+                    {error && <div className="error-message">{error}</div>}
+                    {loading && <div className="loading-message">Processing...</div>}
+
+                    <form onSubmit={handleSubmit} className="auth-form">
+                        <div className="form-group">
+                            <label htmlFor="email">Email</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                value={formData.email} 
+                                onChange={handleChange} 
+                                required 
+                                disabled={loading}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="password">Password</label>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                value={formData.password} 
+                                onChange={handleChange} 
+                                required 
+                                disabled={loading}
+                            />
+                        </div>
+
+                        <button type="submit" className="submit-button" disabled={loading}>
+                            {loading ? 'Logging in...' : 'Login'}
+                        </button>
+                    </form>
+
+                    <div className="social-login">
+                        <div className="divider"><span>Continue with</span></div>
+
+                        <Button 
+                            variant="outlined" 
+                            startIcon={<GoogleIcon />} 
+                            onClick={initiateGoogleLogin} 
+                            fullWidth 
+                            className="social-button"
+                            disabled={loading}
+                        >
+                            Google
+                        </Button>
+
+                        <Button 
+                            variant="outlined" 
+                            startIcon={<GitHubIcon />} 
+                            onClick={initiateGithubLogin} 
+                            fullWidth 
+                            className="social-button"
+                            disabled={loading}
+                        >
+                            GitHub
+                        </Button>
+
+                        <Button 
+                            variant="outlined" 
+                            startIcon={<LinkedInIcon />} 
+                            onClick={initiateLinkedInLogin} 
+                            fullWidth 
+                            className="social-button"
+                            disabled={loading}
+                        >
+                            LinkedIn
+                        </Button>
+                    </div>
+
+                    <p className="register-link">
+                        Need an organiser seat? <a href="/register">Create an account</a>
+                    </p>
+                </div>
             </div>
         </div>
     );

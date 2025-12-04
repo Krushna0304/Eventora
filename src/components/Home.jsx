@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import EventCard from './EventCard';
 import Filters from './Filters';
@@ -21,6 +21,32 @@ const Home = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const highlightStats = useMemo(() => {
+    const totalEvents = events.length;
+    const attendeeCount = events.reduce((sum, ev) => {
+      const current = ev?.currentParticipants ?? ev?.participantCount ?? 0;
+      return sum + (Number.isFinite(current) ? Number(current) : 0);
+    }, 0);
+    const cityCount = new Set(events.map((ev) => ev?.city).filter(Boolean)).size;
+    return [
+      {
+        label: 'Live experiences',
+        value: totalEvents,
+        detail: 'curated for this week',
+      },
+      {
+        label: 'Attendees',
+        value: attendeeCount,
+        detail: 'already registered',
+      },
+      {
+        label: 'Cities represented',
+        value: cityCount,
+        detail: 'across the community',
+      },
+    ];
+  }, [events]);
 
   // update isLoggedIn if localStorage changes (e.g., login/logout in another tab)
   useEffect(() => {
@@ -204,32 +230,58 @@ const Home = () => {
   return (
     <div className="home-container">
       <div className="home-header">
-        <h1>Eventora</h1>
-        <div className="view-toggle">
-          <button 
-            className={`toggle-button ${!isMyEventList ? 'active' : ''}`} 
-            onClick={() => {
-              setIsMyEventList(false);
-              setSearch('');
-              setOrganizerSearch('');
-              fetchEvents({});
-            }}
-          >
-            All Events
-          </button>
-          {isLoggedIn && (
-            <button 
-              className={`toggle-button ${isMyEventList ? 'active' : ''}`}
-              onClick={() => {
-                setIsMyEventList(true);
-                setSearch('');
-                setOrganizerSearch('');
-                handleMyEvents();
-              }}
-            >
-              My Events
-            </button>
-          )}
+        <div className="home-hero">
+          <div className="home-hero-copy">
+            <p className="home-eyebrow">Curate · Host · Experience</p>
+            <div className="home-hero-title">
+              <h1>Eventora</h1>
+              <p className="home-subtitle">
+                Your modern control room for live experiences and audience engagement.
+              </p>
+            </div>
+            <div className="home-hero-actions">
+              <div className="view-toggle">
+                <button 
+                  className={`toggle-button ${!isMyEventList ? 'active' : ''}`} 
+                  onClick={() => {
+                    setIsMyEventList(false);
+                    setSearch('');
+                    setOrganizerSearch('');
+                    fetchEvents({});
+                  }}
+                >
+                  All Events
+                </button>
+                {isLoggedIn && (
+                  <button 
+                    className={`toggle-button ${isMyEventList ? 'active' : ''}`}
+                    onClick={() => {
+                      setIsMyEventList(true);
+                      setSearch('');
+                      setOrganizerSearch('');
+                      handleMyEvents();
+                    }}
+                  >
+                    My Events
+                  </button>
+                )}
+              </div>
+              <p className="home-hero-note">
+                Toggle views to jump between curated events and your private lineup.
+              </p>
+            </div>
+          </div>
+          <div className="home-stats">
+            {highlightStats.map((stat) => (
+              <div key={stat.label} className="home-stat-card">
+                <span className="stat-value">
+                  {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
+                </span>
+                <span className="stat-label">{stat.label}</span>
+                <span className="stat-detail">{stat.detail}</span>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="search-row">
           <div className="search-wrapper" style={{ display: 'flex', gap: 8 }}>
