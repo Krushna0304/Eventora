@@ -15,7 +15,7 @@ const OrganiserDashboard = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [dialogProps, setDialogProps] = useState({ isOpen: false, message: '' });
+  const [dialogProps, setDialogProps] = useState({ isOpen: false, message: '', mlResult: null });
   const [mlLoading, setMlLoading] = useState(false);
 
   useEffect(() => {
@@ -53,13 +53,17 @@ const OrganiserDashboard = () => {
 
   const predictEvent = async (eventId) => {
     setMlLoading(true);
-    setDialogProps({ isOpen: false, message: '' });
+    setDialogProps({ isOpen: false, message: '', mlResult: null });
     try {
       const data = await mlAPI.predictEvent(eventId);
-      setDialogProps({ isOpen: true, message: JSON.stringify(data, null, 2) });
+      setDialogProps({ isOpen: true, mlResult: data, message: '' });
     } catch (err) {
       console.error('Predict error', err);
-      setDialogProps({ isOpen: true, message: err?.response?.data || err?.message || 'Prediction error' });
+      setDialogProps({
+        isOpen: true,
+        mlResult: null,
+        message: err?.response?.data || err?.message || 'Prediction error',
+      });
     } finally {
       setMlLoading(false);
     }
@@ -67,17 +71,21 @@ const OrganiserDashboard = () => {
 
   const getLatestPrediction = async (eventId) => {
     setMlLoading(true);
-    setDialogProps({ isOpen: false, message: '' });
+    setDialogProps({ isOpen: false, message: '', mlResult: null });
     try {
       const data = await mlAPI.getLatestPrediction(eventId);
       if (data) {
-        setDialogProps({ isOpen: true, message: JSON.stringify(data, null, 2) });
+        setDialogProps({ isOpen: true, mlResult: data, message: '' });
       } else {
-        setDialogProps({ isOpen: true, message: 'No latest prediction available.' });
+        setDialogProps({ isOpen: true, mlResult: null, message: 'No latest prediction available.' });
       }
     } catch (err) {
       console.error('Latest prediction error', err);
-      setDialogProps({ isOpen: true, message: err?.response?.data || err?.message || 'Error fetching latest prediction' });
+      setDialogProps({
+        isOpen: true,
+        mlResult: null,
+        message: err?.response?.data || err?.message || 'Error fetching latest prediction',
+      });
     } finally {
       setMlLoading(false);
     }
@@ -85,13 +93,17 @@ const OrganiserDashboard = () => {
 
   const getPredictionHistory = async (eventId) => {
     setMlLoading(true);
-    setDialogProps({ isOpen: false, message: '' });
+    setDialogProps({ isOpen: false, message: '', mlResult: null });
     try {
       const data = await mlAPI.getPredictionHistory(eventId);
-      setDialogProps({ isOpen: true, message: JSON.stringify(data, null, 2) });
+      setDialogProps({ isOpen: true, mlResult: null, message: JSON.stringify(data, null, 2) });
     } catch (err) {
       console.error('History error', err);
-      setDialogProps({ isOpen: true, message: err?.response?.data || err?.message || 'Error fetching prediction history' });
+      setDialogProps({
+        isOpen: true,
+        mlResult: null,
+        message: err?.response?.data || err?.message || 'Error fetching prediction history',
+      });
     } finally {
       setMlLoading(false);
     }
@@ -99,13 +111,17 @@ const OrganiserDashboard = () => {
 
   const checkMLHealth = async () => {
     setMlLoading(true);
-    setDialogProps({ isOpen: false, message: '' });
+    setDialogProps({ isOpen: false, message: '', mlResult: null });
     try {
       const data = await mlAPI.checkHealth();
-      setDialogProps({ isOpen: true, message: JSON.stringify(data, null, 2) });
+      setDialogProps({ isOpen: true, mlResult: null, message: JSON.stringify(data, null, 2) });
     } catch (err) {
       console.error('ML health error', err);
-      setDialogProps({ isOpen: true, message: err?.message || 'Error checking ML health' });
+      setDialogProps({
+        isOpen: true,
+        mlResult: null,
+        message: err?.message || 'Error checking ML health',
+      });
     } finally {
       setMlLoading(false);
     }
@@ -113,13 +129,17 @@ const OrganiserDashboard = () => {
 
   const getMLStats = async () => {
     setMlLoading(true);
-    setDialogProps({ isOpen: false, message: '' });
+    setDialogProps({ isOpen: false, message: '', mlResult: null });
     try {
       const data = await mlAPI.getStats();
-      setDialogProps({ isOpen: true, message: JSON.stringify(data, null, 2) });
+      setDialogProps({ isOpen: true, mlResult: null, message: JSON.stringify(data, null, 2) });
     } catch (err) {
       console.error('ML stats error', err);
-      setDialogProps({ isOpen: true, message: err?.message || 'Error fetching ML stats' });
+      setDialogProps({
+        isOpen: true,
+        mlResult: null,
+        message: err?.message || 'Error fetching ML stats',
+      });
     } finally {
       setMlLoading(false);
     }
@@ -171,9 +191,27 @@ const OrganiserDashboard = () => {
                 <EventCard event={ev} fromOrganiser={true} />
               </div>
               <div className="event-actions">
-                <button onClick={() => predictEvent(ev.id)} disabled={mlLoading}>Predict</button>
-                <button onClick={() => getLatestPrediction(ev.id)} disabled={mlLoading}>Latest</button>
-                <button onClick={() => getPredictionHistory(ev.id)} disabled={mlLoading}>History</button>
+                <button
+                  className="event-action predict"
+                  onClick={() => predictEvent(ev.id)}
+                  disabled={mlLoading}
+                >
+                  Predict
+                </button>
+                <button
+                  className="event-action latest"
+                  onClick={() => getLatestPrediction(ev.id)}
+                  disabled={mlLoading}
+                >
+                  Latest
+                </button>
+                <button
+                  className="event-action history"
+                  onClick={() => getPredictionHistory(ev.id)}
+                  disabled={mlLoading}
+                >
+                  History
+                </button>
               </div>
             </div>
           ))}
@@ -183,7 +221,7 @@ const OrganiserDashboard = () => {
       <Dialog
         isOpen={dialogProps.isOpen}
         message={dialogProps.message}
-        onClose={() => setDialogProps({ isOpen: false, message: '' })}
+        onClose={() => setDialogProps({ isOpen: false, message: '', mlResult: null })}
       />
 
       <ProfileMenu

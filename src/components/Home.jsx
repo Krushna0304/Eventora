@@ -19,6 +19,7 @@ const Home = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN));
   const [userInfo, setUserInfo] = useState(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [activeQuickFilter, setActiveQuickFilter] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,6 +48,16 @@ const Home = () => {
       },
     ];
   }, [events]);
+
+  const quickFilters = useMemo(
+    () => [
+      { id: 'business', value: 'BUSINESS', label: 'Trending tech', detail: 'Product, SaaS, growth' },
+      { id: 'culture', value: 'CULTURE', label: 'Culture & arts', detail: 'Museums, theatre, pop-ups' },
+      { id: 'sports', value: 'SPORTS', label: 'Wellness & sports', detail: 'Outdoor runs, community yoga' },
+      { id: 'community', value: 'COMMUNITY', label: 'Community impact', detail: 'Non-profits & local drives' },
+    ],
+    []
+  );
 
   // update isLoggedIn if localStorage changes (e.g., login/logout in another tab)
   useEffect(() => {
@@ -166,11 +177,28 @@ const Home = () => {
     }
   };
 
+  const handleQuickFilter = (category) => {
+    setSearch('');
+    setOrganizerSearch('');
+    setIsMyEventList(false);
+
+    if (activeQuickFilter === category) {
+      setActiveQuickFilter('');
+      fetchEvents({});
+      return;
+    }
+
+    setActiveQuickFilter(category);
+    fetchEvents({ eventCategory: category });
+  };
+
   const handleApplyFilters = (filterPayload) => {
+    setActiveQuickFilter('');
     fetchEvents(filterPayload);
   };
 
   const handleClearFilters = () => {
+    setActiveQuickFilter('');
     fetchEvents({});
   };
 
@@ -328,6 +356,31 @@ const Home = () => {
             />
           )}
         </div>
+
+        <section className="home-quick-filters">
+          <div className="quick-filters-head">
+            <div>
+              <p className="home-eyebrow">Curated views</p>
+              <h3>Plan by vibe</h3>
+            </div>
+            <p className="home-hero-note">
+              Tap a chip to instantly apply category filters. Tap again to reset.
+            </p>
+          </div>
+          <div className="quick-chip-row">
+            {quickFilters.map((chip) => (
+              <button
+                type="button"
+                key={chip.id}
+                className={`quick-chip ${activeQuickFilter === chip.value ? 'active' : ''}`}
+                onClick={() => handleQuickFilter(chip.value)}
+              >
+                <span className="chip-label">{chip.label}</span>
+                <span className="chip-desc">{chip.detail}</span>
+              </button>
+            ))}
+          </div>
+        </section>
       </div>
 
       <div className="home-body">

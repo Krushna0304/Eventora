@@ -11,12 +11,24 @@ const EventCard = ({ event, fromOrganiser = false, fromHomeView = '' }) => {
     organizerName,
     eventCategory,
     city,
+    state,
+    country,
+    locationName,
     eventStatus,
     startDate,
     participantCount,
+    currentParticipants,
   } = event;
 
   const formattedDate = startDate ? new Date(startDate).toLocaleString() : 'TBA';
+  const locationParts = [locationName, city, state, country].filter(Boolean);
+  const locationLabel = locationParts.length ? locationParts.join(', ') : 'Hybrid / Online';
+  const participantsRaw = currentParticipants ?? participantCount ?? 0;
+  const participants = Number.isFinite(Number(participantsRaw)) ? Number(participantsRaw) : 0;
+  const formattedParticipants = `${participants.toLocaleString()} attending`;
+  const statusLabel = eventStatus || 'SCHEDULED';
+  const statusClass = `status-${statusLabel.toLowerCase()}`;
+  const footerCopy = fromOrganiser ? 'Monitor performance' : 'Secure your seat';
 
   let eventLink = fromOrganiser ? `/organiser/events/${id}` : `/events/${id}`;
   if (!fromOrganiser && fromHomeView) {
@@ -25,21 +37,38 @@ const EventCard = ({ event, fromOrganiser = false, fromHomeView = '' }) => {
   }
 
   return (
-    <div className="event-card" key={id}>
-      <div className="event-header">
-  <h3 className="event-title"><Link to={eventLink}>{title}</Link></h3>
-        <div className="event-category">{eventCategory || 'General'}</div>
+    <article className="event-card" key={id}>
+      <div className="event-card__chips">
+        <span className="event-pill event-pill--category">{eventCategory || 'General'}</span>
+        <span className={`event-pill event-pill--status ${statusClass}`}>
+          {statusLabel}
+        </span>
       </div>
-      <div className="event-meta">
-        <div className="organizer">Organizer: {organizerName || '—'}</div>
-        <div className="location">{city || '—'}</div>
-        <div className="date">{formattedDate}</div>
+      <Link className="event-card__title" to={eventLink}>
+        {title}
+      </Link>
+      <p className="event-card__meta">
+        <span>{organizerName || 'Event organiser'}</span>
+        <span className="meta-dot" />
+        <span>{locationLabel}</span>
+      </p>
+      <div className="event-card__body">
+        <div>
+          <p className="label">Starts</p>
+          <p className="value">{formattedDate}</p>
+        </div>
+        <div>
+          <p className="label">Attendees</p>
+          <p className="value">{formattedParticipants}</p>
+        </div>
       </div>
-      <div className="event-footer">
-        <div className="status">Status: {eventStatus || 'UNKNOWN'}</div>
-        <div className="participants">{participantCount ?? 0} going</div>
+      <div className="event-card__footer">
+        <p className="event-card__hint">{footerCopy}</p>
+        <Link to={eventLink} className="event-card__cta">
+          View details
+        </Link>
       </div>
-    </div>
+    </article>
   );
 };
 

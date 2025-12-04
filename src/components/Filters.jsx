@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './Filters.css';
 
 const defaultFilter = {
   minPrice: '',
@@ -88,57 +89,75 @@ const Filters = ({ onApply, onClear, initial = {} }) => {
 
   return (
     <form className="filters-form" onSubmit={apply}>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <input
-          name="minPrice"
-          type="number"
-          step="0.01"
-          placeholder="Min price"
-          value={filters.minPrice}
-          onChange={handleChange}
-        />
-        <input
-          name="maxPrice"
-          type="number"
-          step="0.01"
-          placeholder="Max price"
-          value={filters.maxPrice}
-          onChange={handleChange}
-        />
-        <input
-          name="city"
-          placeholder="City"
-          value={filters.city}
-          onChange={handleChange}
-        />
-        <input
-          name="state"
-          placeholder="State"
-          value={filters.state}
-          onChange={handleChange}
-        />
-        <input
-          name="country"
-          placeholder="Country"
-          value={filters.country}
-          onChange={handleChange}
-        />
-        <select name="eventCategory" value={filters.eventCategory} onChange={handleChange}>
-          <option value="">All categories</option>
-          <option value="EDUCATION">Education</option>
-          <option value="HEALTH">Health</option>
-          <option value="SPORTS">Sports</option>
-          <option value="CULTURE">Culture</option>
-          <option value="MUSIC">Music</option>
-          <option value="COMMUNITY">Community</option>
-          <option value="BUSINESS">Business</option>
-          <option value="ENTERTAINMENT">Entertainment</option>
-          <option value="OTHER">Other</option>
-        </select>
+      <div className="filters-grid">
+        <label className="filters-field">
+          <span>Min price</span>
+          <input
+            name="minPrice"
+            type="number"
+            step="0.01"
+            placeholder="0"
+            value={filters.minPrice}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="filters-field">
+          <span>Max price</span>
+          <input
+            name="maxPrice"
+            type="number"
+            step="0.01"
+            placeholder="250"
+            value={filters.maxPrice}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="filters-field">
+          <span>City</span>
+          <input
+            name="city"
+            placeholder="City"
+            value={filters.city}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="filters-field">
+          <span>State</span>
+          <input
+            name="state"
+            placeholder="State"
+            value={filters.state}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="filters-field">
+          <span>Country</span>
+          <input
+            name="country"
+            placeholder="Country"
+            value={filters.country}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="filters-field">
+          <span>Category</span>
+          <select name="eventCategory" value={filters.eventCategory} onChange={handleChange}>
+            <option value="">All categories</option>
+            <option value="EDUCATION">Education</option>
+            <option value="HEALTH">Health</option>
+            <option value="SPORTS">Sports</option>
+            <option value="CULTURE">Culture</option>
+            <option value="MUSIC">Music</option>
+            <option value="COMMUNITY">Community</option>
+            <option value="BUSINESS">Business</option>
+            <option value="ENTERTAINMENT">Entertainment</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </label>
       </div>
 
-      <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <div className="filters-row">
+        <label className="filters-checkbox">
           <input
             type="checkbox"
             name="isNearby"
@@ -149,22 +168,22 @@ const Filters = ({ onApply, onClear, initial = {} }) => {
         </label>
         {filters.isNearby && (
           <input
+            className="radius-input"
             name="radiusInKm"
             type="number"
             placeholder="Radius in km"
             value={filters.radiusInKm}
             onChange={handleChange}
-            style={{ width: '100px' }}
           />
         )}
         {locationError && (
-          <span style={{ color: 'red', fontSize: '0.9em' }}>{locationError}</span>
+          <span className="filters-error">{locationError}</span>
         )}
       </div>
 
-      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-        <button type="submit">Apply</button>
-        <button type="button" onClick={clear}>Clear</button>
+      <div className="filters-actions">
+        <button type="submit" className="filters-apply">Apply filters</button>
+        <button type="button" className="filters-clear" onClick={clear}>Clear</button>
       </div>
     </form>
   );
