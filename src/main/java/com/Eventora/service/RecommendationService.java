@@ -20,12 +20,14 @@ public class RecommendationService {
     private final AppUserRepository appUserRepository;
     private final EventUtils eventUtils;
     private final RegistrationRepository registrationRepository;
+    private final UserInteractionService userInteractionService;
 
     //Number of max similar Events to recommend
     private  int maxSize = 8;
 
-    public RecommendationService(AppUserRepository appUserRepository,RegistrationRepository registrationRepository ,EventRepository eventRepository,ApplicationContextUtils applicationContextUtils,EventUtils eventUtils)
+    public RecommendationService(UserInteractionService userInteractionService,AppUserRepository appUserRepository,RegistrationRepository registrationRepository ,EventRepository eventRepository,ApplicationContextUtils applicationContextUtils,EventUtils eventUtils)
     {
+        this.userInteractionService = userInteractionService;
         this.appUserRepository = appUserRepository;
         this.registrationRepository = registrationRepository;
         this.eventRepository = eventRepository;
@@ -60,7 +62,8 @@ public class RecommendationService {
                 .sorted(Comparator.comparingDouble(e-> -similarity(currentEvent,e)))
                                     .limit(maxSize)
                                     .toList();
-        return eventUtils.extractEventTemplates(events);
+        List<Long> likedEventIds =  userInteractionService.getLikedEventIds();
+        return eventUtils.extractEventTemplates(events, likedEventIds);
     }
     private double similarity(Event e1, Event e2)
     {

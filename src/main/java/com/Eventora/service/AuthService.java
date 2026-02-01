@@ -36,14 +36,16 @@ public class AuthService {
         if (existingUser.isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists");
         }
-
         AppUser newUser = AppUser.builder()
                 .displayName(registerRequest.displayName())
                 .email(registerRequest.email())
                 .password(passwordEncoder.encode(registerRequest.password()))
                 .build();
-
-        appUserRepository.save(newUser);
+        try{
+            appUserRepository.save(newUser);
+        }catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists");
+        }
     }
 
 

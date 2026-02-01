@@ -3,18 +3,23 @@ package com.Eventora.service;
 import com.Eventora.Utils.ApplicationContextUtils;
 import com.Eventora.Utils.EventUtils;
 import com.Eventora.dto.EventTemplate;
+import com.Eventora.dto.UserInteractionEvent;
 import com.Eventora.entity.*;
 import com.Eventora.entity.enums.EventStatus;
+import com.Eventora.entity.enums.InteractionType;
 import com.Eventora.entity.enums.RegistrationStatus;
 import com.Eventora.repository.EventRepository;
 import com.Eventora.repository.AppUserRepository;
 import com.Eventora.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -26,6 +31,7 @@ public class RegistrationService {
     private final AppUserRepository userRepository;
     private final ApplicationContextUtils applicationContextUtils;
     private final EventUtils eventUtils;
+    private final ApplicationEventPublisher publisher;
 
     //Done
     @Transactional
@@ -44,13 +50,24 @@ public class RegistrationService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Event full or not open for registration");
         }
 
+        try{
         registrationRepository.save(
                 Registration.builder()
                         .event(Event.builder().id(eventId).build()) // lightweight reference
                         .user(appUser)
                         .status(RegistrationStatus.REGISTERED)
-                        .build()
-        );
+                        .build());
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"User registered only once for the event");
+        }
+
+        publisher.publishEvent(new UserInteractionEvent(
+                applicationContextUtils.getLoggedUser().getId(),
+                eventId,
+                InteractionType.REGISTER_EVENT,
+                Map.of()
+        ));
+
     }
 
     //Done op
@@ -80,6 +97,12 @@ public class RegistrationService {
         }
 
         eventRepository.updateParticipantCount(eventId, -1);
+        publisher.publishEvent(new UserInteractionEvent(
+                applicationContextUtils.getLoggedUser().getId(),
+                eventId,
+                InteractionType.UNREGISTER_EVENT,
+                Map.of()
+        ));
     }
 
     //Done
@@ -110,6 +133,12 @@ public class RegistrationService {
 
         // Increase checked-in count
         eventRepository.increaseCheckedInCnt(eventId);
+        publisher.publishEvent(new UserInteractionEvent(
+                applicationContextUtils.getLoggedUser().getId(),
+                eventId,
+                InteractionType.CHECK_IN,
+                Map.of()
+        ));
     }
 
 

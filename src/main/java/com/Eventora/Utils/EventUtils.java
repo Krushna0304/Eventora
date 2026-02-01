@@ -8,6 +8,7 @@ import com.Eventora.entity.enums.EventStatus;
 import com.Eventora.entity.enums.RegistrationStatus;
 import com.Eventora.projection.EventDetailProjection;
 import com.Eventora.projection.EventTemplateProjection;
+import com.Eventora.service.UserInteractionService;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +19,9 @@ import java.util.stream.Collectors;
 @Component
 public class EventUtils {
 
-    public List<EventTemplate> extractEventTemplates(List<Event> events) {
+
+    public List<EventTemplate> extractEventTemplates(List<Event> events, List<Long> likedEventIds) {
+
         return events.stream()
                 .map(event -> EventTemplate.builder()
                         .id(event.getId())
@@ -28,7 +31,8 @@ public class EventUtils {
                         .city(event.getCity())
                         .eventStatus(event.getEventStatus())
                         .startDate(event.getStartDate())
-                        .participantCount(event.getCurrentParticipants()) // placeholder if you track later
+                        .participantCount(event.getCurrentParticipants())
+                        .isLiked(likedEventIds.contains(event.getId()))
                         .build())
                 .toList();
     }
@@ -90,7 +94,7 @@ public class EventUtils {
                 .build();
     }
 
-    public Page<EventTemplate> mapToEventTemplate(Page<EventTemplateProjection> projections) {
+    public Page<EventTemplate> mapToEventTemplate(Page<EventTemplateProjection> projections,List<Long> likedEventIds) {
         return projections.map(r ->
                 EventTemplate.builder()
                         .id(r.getId())
@@ -101,8 +105,22 @@ public class EventUtils {
                         .eventCategory(EventCategory.valueOf(r.getEventCategory().toUpperCase()))
                         .startDate(r.getStartDate())
                         .participantCount(r.getParticipantCount())
+                        .isLiked(likedEventIds.contains(r.getId()))
                         .build()
         );
     }
-
+    public EventTemplate mapToEventTemplate(Event event,Boolean isLiked) {
+        return
+                EventTemplate.builder()
+                        .id(event.getId())
+                        .title(event.getTitle())
+                        .organizerName(event.getOrganizer().getDisplayName())
+                        .eventStatus(event.getEventStatus())
+                        .city(event.getCity())
+                        .eventCategory(event.getEventCategory())
+                        .startDate(event.getStartDate())
+                        .participantCount(event.getCurrentParticipants())
+                        .isLiked(isLiked)
+                        .build();
+    }
 }

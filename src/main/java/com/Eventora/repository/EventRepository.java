@@ -26,6 +26,10 @@ import java.util.Optional;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> , JpaSpecificationExecutor<Event> {
+
+    @Query(value = "select * from events where id in(:eventIds)",nativeQuery = true)
+    List<Event> findAllByIdIn(List<Long> eventIds);
+
     List<Event> findByEventCategory(EventCategory category);
     List<Event> findByEventStatus(EventStatus status);
     List<Event> findByCityIgnoreCase(String city);
@@ -69,7 +73,8 @@ public interface EventRepository extends JpaRepository<Event, Long> , JpaSpecifi
         e.city,
         e.eventStatus,
         e.startDate,
-        e.currentParticipants
+        e.currentParticipants,
+        false
     )
     FROM Event e
     """)
@@ -209,7 +214,8 @@ public interface EventRepository extends JpaRepository<Event, Long> , JpaSpecifi
         e.city,
         e.event_status as eventStatus,
         e.start_date as startDate,
-        e.current_participants as participantCount
+        e.current_participants as participantCount,
+            false
     FROM events e
     INNER JOIN event_registrations er ON er.event_id = e.id
     WHERE 

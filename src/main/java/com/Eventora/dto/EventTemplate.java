@@ -2,10 +2,7 @@ package com.Eventora.dto;
 
 import com.Eventora.entity.enums.EventCategory;
 import com.Eventora.entity.enums.EventStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -22,4 +19,5 @@ public class EventTemplate {
     private EventStatus eventStatus;
     private LocalDateTime startDate;
     private Integer participantCount;
+    private Boolean isLiked;
 }

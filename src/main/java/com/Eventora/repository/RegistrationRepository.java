@@ -48,7 +48,8 @@ public interface RegistrationRepository extends JpaRepository<Registration,Long>
         e.city,
         e.eventStatus,
         e.startDate,
-        e.currentParticipants
+        e.currentParticipants,
+        false
     )
     FROM Registration r
     JOIN r.event e

@@ -22,6 +22,17 @@ import java.util.List;
 @Entity
 @Table(
         name = "events",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_event_organizer_title_start_city",
+                        columnNames = {
+                                "organizer_id",
+                                "title",
+                                "start_date",
+                                "city"
+                        }
+                )
+        },
         indexes = {
                 @Index(name = "idx_event_city", columnList = "city"),
                 @Index(name = "idx_event_category", columnList = "eventCategory"),

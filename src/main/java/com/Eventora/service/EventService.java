@@ -1,14 +1,12 @@
 package com.Eventora.service;
 import com.Eventora.Utils.ApplicationContextUtils;
 import com.Eventora.Utils.EventUtils;
-import com.Eventora.dto.CreateEventDto;
-import com.Eventora.dto.EventDetailDto;
-import com.Eventora.dto.EventFilterRequest;
-import com.Eventora.dto.EventTemplate;
+import com.Eventora.dto.*;
 import com.Eventora.entity.AppUser;
 import com.Eventora.entity.Event;
 import com.Eventora.entity.enums.EventCategory;
 import com.Eventora.entity.enums.EventStatus;
+import com.Eventora.entity.enums.InteractionType;
 import com.Eventora.entity.enums.RegistrationStatus;
 import com.Eventora.projection.EventDetailProjection;
 import com.Eventora.projection.EventTemplateProjection;
@@ -17,6 +15,7 @@ import com.Eventora.repository.EventRepository;
 import com.Eventora.security.CustomUserDetails;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +38,8 @@ public class EventService {
     private final AppUserRepository appUserRepository;
     private final EventUtils eventUtils;
     private final ApplicationContextUtils applicationContextUtils;
+    private final UserInteractionService userInteractionService;
+    private final ApplicationEventPublisher publisher;
 
     //Done
     public EventDetailDto createEvent(CreateEventDto createEventDto, MultipartFile file) throws Exception {
@@ -167,10 +168,17 @@ public class EventService {
 
         for(Event event: events) {
             event.setImpressions(event.getImpressions()+1);
+            publisher.publishEvent(new UserInteractionEvent(
+                    applicationContextUtils.getLoggedUser().getId(),
+                    event.getId(),
+                    InteractionType.VIEW_EVENT,
+                    Map.of()
+            ));
         }
         eventRepository.saveAll(events);
         // Convert to EventTemplate DTOs
-        return eventUtils.extractEventTemplates(events);
+        List<Long> likedEventIds = userInteractionService.getLikedEventIds();
+        return eventUtils.extractEventTemplates(events,likedEventIds);
     }
 
     //Done
@@ -190,7 +198,8 @@ public class EventService {
             Long userId = applicationContextUtils.getLoggedUser().getId();
             return eventRepository.searchMyRegisteredEvents(userId, eventName, organizerName, pageable);
         } else {
-            return eventUtils.mapToEventTemplate(eventRepository.searchEvents(eventName, organizerName, pageable));
+            List<Long> likedEventIds = userInteractionService.getLikedEventIds();
+            return eventUtils.mapToEventTemplate(eventRepository.searchEvents(eventName, organizerName, pageable),likedEventIds);
         }
     }
 
@@ -207,6 +216,14 @@ public class EventService {
                 eventId,
                 userRegistrationStatus.name()
         ).orElseThrow(() -> new RuntimeException("Event not found"));
+
+        publisher.publishEvent(new UserInteractionEvent(
+                applicationContextUtils.getLoggedUser().getId(),
+                eventId,
+                InteractionType.VIEW_EVENT,
+                Map.of()
+        ));
+
         return eventUtils.mapToDto(projection);
     }
 
@@ -287,7 +304,8 @@ public class EventService {
             throw new Exception("Organizer not found");
         }
         Pageable pageable = PageRequest.of(page, size, Sort.by("startDate").descending());
-        return eventUtils.mapToEventTemplate(eventRepository.searchEventsOrganizeByMe(eventTitle, organizer.getId(), pageable));
+        List<Long> likedEventIds = userInteractionService.getLikedEventIds();
+        return eventUtils.mapToEventTemplate(eventRepository.searchEventsOrganizeByMe(eventTitle, organizer.getId(), pageable),likedEventIds);
     }
 
 

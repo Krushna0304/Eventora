@@ -45,7 +45,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**","/api/auth/**", "/public/api/**","/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/auth/**","/api/auth/**", "/public/api/**","/swagger-ui/**", "/api/ml/**","/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class)
