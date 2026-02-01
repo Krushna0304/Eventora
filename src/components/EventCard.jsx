@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './EventCard.css';
+import { eventsAPI } from '../services/api';
 
-const EventCard = ({ event, fromOrganiser = false, fromHomeView = '' }) => {
+
+const EventCard = ({ event, liked, onLikeToggle, fromOrganiser = false, fromHomeView = '' }) => {
+  const [likeLoading, setLikeLoading] = useState(false);
   if (!event) return null;
+  const handleLikeToggle = async () => {
+    setLikeLoading(true);
+    try {
+      await onLikeToggle(event.id, !liked);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
 
   const {
     id,
@@ -43,6 +54,21 @@ const EventCard = ({ event, fromOrganiser = false, fromHomeView = '' }) => {
         <span className={`event-pill event-pill--status ${statusClass}`}>
           {statusLabel}
         </span>
+        <button
+          className={`event-like-btn${liked ? ' liked' : ''}`}
+          onClick={handleLikeToggle}
+          disabled={likeLoading}
+          title={liked ? 'Unlike' : 'Like'}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 8 }}
+        >
+          <span
+            role="img"
+            aria-label={liked ? 'liked' : 'like'}
+            style={{ color: liked ? '#e25555' : '#aaa', fontSize: 20 }}
+          >
+            {liked ? '❤️' : '🤍'}
+          </span>
+        </button>
       </div>
       <Link className="event-card__title" to={eventLink}>
         {title}

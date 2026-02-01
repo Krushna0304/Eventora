@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import EventCard from './EventCard';
+import Watchlist from './Watchlist';
 import Filters from './Filters';
 import ProfileMenu from './ProfileMenu';
 import { eventsAPI, authAPI, registrationsAPI } from '../services/api';
@@ -13,6 +14,7 @@ const Home = () => {
   const [search, setSearch] = useState('');
   const [organizerSearch, setOrganizerSearch] = useState('');
   const [isMyEventList, setIsMyEventList] = useState(false);
+  const [showWatchlist, setShowWatchlist] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState('');
@@ -255,6 +257,22 @@ const Home = () => {
     navigate('/organiser');
   };
 
+  // Like/unlike handler for all events
+  const handleLikeToggle = async (eventId, newLiked) => {
+    try {
+      if (newLiked) {
+        await eventsAPI.createLikeEvent(eventId);
+      } else {
+        await eventsAPI.deleteLikeEvent(eventId);
+      }
+      // Update liked state in all event lists
+      setEvents((prev) => prev.map(ev => ev.id === eventId ? { ...ev, isLiked: newLiked } : ev));
+      setFilteredEvents((prev) => prev.map(ev => ev.id === eventId ? { ...ev, isLiked: newLiked } : ev));
+    } catch (e) {
+      // Optionally show error
+    }
+  };
+
   return (
     <div className="home-container">
       <div className="home-header">
@@ -270,9 +288,10 @@ const Home = () => {
             <div className="home-hero-actions">
               <div className="view-toggle">
                 <button 
-                  className={`toggle-button ${!isMyEventList ? 'active' : ''}`} 
+                  className={`toggle-button ${!isMyEventList && !showWatchlist ? 'active' : ''}`} 
                   onClick={() => {
                     setIsMyEventList(false);
+                    setShowWatchlist(false);
                     setSearch('');
                     setOrganizerSearch('');
                     fetchEvents({});
@@ -281,17 +300,29 @@ const Home = () => {
                   All Events
                 </button>
                 {isLoggedIn && (
-                  <button 
-                    className={`toggle-button ${isMyEventList ? 'active' : ''}`}
-                    onClick={() => {
-                      setIsMyEventList(true);
-                      setSearch('');
-                      setOrganizerSearch('');
-                      handleMyEvents();
-                    }}
-                  >
-                    My Events
-                  </button>
+                  <>
+                    <button 
+                      className={`toggle-button ${isMyEventList ? 'active' : ''}`}
+                      onClick={() => {
+                        setIsMyEventList(true);
+                        setShowWatchlist(false);
+                        setSearch('');
+                        setOrganizerSearch('');
+                        handleMyEvents();
+                      }}
+                    >
+                      My Events
+                    </button>
+                    <button
+                      className={`toggle-button ${showWatchlist ? 'active' : ''}`}
+                      onClick={() => {
+                        setIsMyEventList(false);
+                        setShowWatchlist(true);
+                      }}
+                    >
+                      Watchlist
+                    </button>
+                  </>
                 )}
               </div>
               <p className="home-hero-note">
@@ -384,22 +415,34 @@ const Home = () => {
       </div>
 
       <div className="home-body">
-        <aside className="home-filters">
-          <h3>Filters</h3>
-          <Filters onApply={handleApplyFilters} onClear={handleClearFilters} />
-        </aside>
+        {showWatchlist ? (
+          <Watchlist />
+        ) : (
+          <>
+            <aside className="home-filters">
+              <h3>Filters</h3>
+              <Filters onApply={handleApplyFilters} onClear={handleClearFilters} />
+            </aside>
 
-        <main className="home-list">
-          {loading && <div className="info">Loading events...</div>}
-          {error && <div className="error-message">{error}</div>}
-          {!loading && filteredEvents.length === 0 && !error && <div className="info">No events found.</div>}
+            <main className="home-list">
+              {loading && <div className="info">Loading events...</div>}
+              {error && <div className="error-message">{error}</div>}
+              {!loading && filteredEvents.length === 0 && !error && <div className="info">No events found.</div>}
 
-          <div className="events-grid">
-            {filteredEvents.map((ev) => (
-              <EventCard key={ev.id} event={ev} fromHomeView={isMyEventList ? 'my' : 'all'} />
-            ))}
-          </div>
-        </main>
+              <div className="events-grid">
+                {filteredEvents.map((ev) => (
+                  <EventCard
+                    key={ev.id}
+                    event={ev}
+                    liked={!!ev.isLiked}
+                    onLikeToggle={handleLikeToggle}
+                    fromHomeView={isMyEventList ? 'my' : 'all'}
+                  />
+                ))}
+              </div>
+            </main>
+          </>
+        )}
       </div>
     </div>
   );

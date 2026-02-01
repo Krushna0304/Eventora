@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+
 import ProfileMenu from './ProfileMenu';
 import EventCard from './EventCard';
 import Dialog from './Dialog';
+import Watchlist from './Watchlist';
 import { authAPI, eventsAPI, mlAPI } from '../services/api';
 import { STORAGE_KEYS, PAGINATION } from '../config/constants';
 import './OrganiserDashboard.css';
@@ -178,6 +180,7 @@ const OrganiserDashboard = () => {
       </header>
 
       <main className="organiser-body">
+        <Watchlist />
         <p className="welcome-text">Welcome back, <strong>{userInfo?.displayName || 'Organiser'}</strong>! Manage your events efficiently.</p>
 
         {loading && <div className="info">Loading your events...</div>}
@@ -221,6 +224,7 @@ const OrganiserDashboard = () => {
       <Dialog
         isOpen={dialogProps.isOpen}
         message={dialogProps.message}
+        mlResult={dialogProps.mlResult}
         onClose={() => setDialogProps({ isOpen: false, message: '', mlResult: null })}
       />
 

@@ -101,6 +101,25 @@ export const authAPI = {
  * Events API
  */
 export const eventsAPI = {
+    /**
+     * Like an event
+     * @param {string|number} eventId - Event ID
+     * @returns {Promise}
+     */
+    createLikeEvent: async (eventId) => {
+      const response = await apiClient.post(`/api/interactions/${eventId}`);
+      return response.data;
+    },
+
+    /**
+     * Unlike an event
+     * @param {string|number} eventId - Event ID
+     * @returns {Promise}
+     */
+    deleteLikeEvent: async (eventId) => {
+      const response = await apiClient.delete(`/api/interactions/${eventId}`);
+      return response.data;
+    },
   /**
    * Get events by filter criteria
    * @param {Object} filterPayload - Filter criteria
@@ -185,6 +204,34 @@ export const eventsAPI = {
     const response = await apiClient.get('/public/api/events/getByNameOrganiserByMe', {
       params,
     });
+    return response.data;
+  },
+  /**
+   * Watchlist: Get all liked events (watchlist)
+   * @returns {Promise} Array of liked events
+   */
+  getWatchlist: async () => {
+    const response = await apiClient.get('/api/interactions');
+    return response.data;
+  },
+
+  /**
+   * Watchlist: Add event to watchlist
+   * @param {string|number} eventId - Event ID
+   * @returns {Promise} Response
+   */
+  addToWatchlist: async (eventId) => {
+    const response = await apiClient.post(`/api/interactions/watchlist/${eventId}`);
+    return response.data;
+  },
+
+  /**
+   * Watchlist: Remove event from watchlist
+   * @param {string|number} eventId - Event ID
+   * @returns {Promise} Response
+   */
+  removeFromWatchlist: async (eventId) => {
+    const response = await apiClient.delete(`/api/interactions/watchlist/${eventId}`);
     return response.data;
   },
 };
