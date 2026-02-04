@@ -257,7 +257,7 @@ public class MLPredictionService {
                         event.getOrganizerReputation() : 0.5)
                 .avgPastAttendanceRate(event.getAvgPastAttendanceRate() != null ?
                         event.getAvgPastAttendanceRate() : 0.5)
-                .ctr(event.getCtr() != null ? event.getCtr() : 0.0)
+                .ctr(normalizeCtr(event.getCtr() != null ? event.getCtr() : 0.0))
                 .socialMentions(event.getSocialMentions() != null ? event.getSocialMentions() : 0)
                 .weekday(weekday)
                 .category(event.getEventCategory().name())
@@ -288,6 +288,18 @@ public class MLPredictionService {
         } else {
             return "small";
         }
+    }
+
+    /**
+     * Normalize CTR (Click-Through Rate) to be between 0 and 1
+     * ML service expects CTR as a decimal ratio (0.0 to 1.0)
+     */
+    private Double normalizeCtr(Double ctr) {
+        if (ctr == null) {
+            return 0.0;
+        }
+        // Clamp CTR value to be between 0 and 1
+        return Math.min(Math.max(ctr, 0.0), 1.0);
     }
 
     /**

@@ -51,6 +51,8 @@ public class AuthController {
         }
     }
 
+
+    //need to be authenticated to access this endpoint
     @GetMapping("/getUserInfo")
     public ResponseEntity<?> getUserInfo() {
         try {

@@ -168,16 +168,24 @@ public class EventService {
 
         for(Event event: events) {
             event.setImpressions(event.getImpressions()+1);
+
+            if(applicationContextUtils.getLoggedUser() != null){
+
             publisher.publishEvent(new UserInteractionEvent(
                     applicationContextUtils.getLoggedUser().getId(),
                     event.getId(),
                     InteractionType.VIEW_EVENT,
                     Map.of()
             ));
+            }
         }
         eventRepository.saveAll(events);
         // Convert to EventTemplate DTOs
-        List<Long> likedEventIds = userInteractionService.getLikedEventIds();
+        List<Long> likedEventIds = new ArrayList<>();
+        if(applicationContextUtils.getLoggedUser() != null){
+
+            likedEventIds = userInteractionService.getLikedEventIds();
+        }
         return eventUtils.extractEventTemplates(events,likedEventIds);
     }
 

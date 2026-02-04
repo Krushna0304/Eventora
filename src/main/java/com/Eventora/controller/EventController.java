@@ -12,25 +12,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 @RestController
+///api/v1/organizer/events
+
+
 @RequestMapping("/public/api/events")
 @RequiredArgsConstructor
 public class EventController {
 
     private final EventService eventService;
 
-    @PostMapping("/create")
-    public ResponseEntity<EventDetailDto> createEvent(@RequestBody CreateEventDto createEventDto) {
-        //, @RequestParam("poster")MultipartFile file;
-        MultipartFile file = null;
-        try {
-            EventDetailDto createdEvent = eventService.createEvent(createEventDto,file);
-            return ResponseEntity.ok(createdEvent);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
-    }
     @GetMapping("/getByNameAndOrganizer")
     public ResponseEntity<?> getByNameAndOrganizer(
             @RequestParam(name = "eventName", required = false) String eventName,
@@ -72,6 +62,21 @@ public class EventController {
            } catch (Exception e) {
                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
            }
+    }
+
+    @PostMapping("/create")
+
+    public ResponseEntity<EventDetailDto> createEvent(@RequestBody CreateEventDto createEventDto) {
+        //, @RequestParam("poster")MultipartFile file;
+        MultipartFile file = null;
+        try {
+            EventDetailDto createdEvent = eventService.createEvent(createEventDto,file);
+            return ResponseEntity.ok(createdEvent);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @PutMapping ("/cancel/{eventId}")

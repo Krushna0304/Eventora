@@ -51,6 +51,7 @@ public class UserInteraction {
     @Builder.Default
     private Set<Long> viewedEvents = new HashSet<>();
 
+    private static final int MAX_SHOWN_EVENTS = 100;
     /* =====================
        PRICE PREFERENCE
        ===================== */
@@ -67,6 +68,26 @@ public class UserInteraction {
     /* =====================
        HELPER METHODS
        ===================== */
+    @Builder.Default
+    private Set<Long> shownEvents = new HashSet<>();
+
+    public void addShownEvents(Collection<Long> eventIds) {
+
+        for (Long eventId : eventIds) {
+            shownEvents.add(eventId);
+
+            if (shownEvents.size() > MAX_SHOWN_EVENTS) {
+                // Remove oldest
+                Iterator<Long> it = shownEvents.iterator();
+                if (it.hasNext()) {
+                    it.next();
+                    it.remove();
+                }
+            }
+        }
+    }
+
+
 
     public void incrementCategory(EventCategory category, int weight) {
         if (category == null) return;
