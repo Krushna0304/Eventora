@@ -99,13 +99,24 @@ const Home = () => {
     // On initial load, read query param to restore view if present
     const qs = new URLSearchParams(location.search);
     const view = qs.get('view');
-    if (view === 'my') {
-      setIsMyEventList(true);
-      handleMyEvents();
-    } else {
-      setIsMyEventList(false);
-      // Initial load without filters
-      fetchEvents({});
+      if (view === 'my') {
+        setIsMyEventList(true);
+        handleMyEvents();
+      } else {
+        setIsMyEventList(false);
+        // Initial load: fetch recommendations instead of filtered events
+        setLoading(true);
+        eventsAPI.getRecommendations(10)
+          .then((data) => {
+            setEvents(Array.isArray(data) ? data : []);
+            setFilteredEvents(Array.isArray(data) ? data : []);
+          })
+          .catch((err) => {
+            setEvents([]);
+            setFilteredEvents([]);
+            setError('Could not load recommendations.');
+          })
+          .finally(() => setLoading(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

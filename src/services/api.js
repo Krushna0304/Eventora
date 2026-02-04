@@ -142,6 +142,18 @@ export const eventsAPI = {
     return response.data;
   },
 
+    /**
+     * Get recommended events
+     * @param {number} limit - Number of recommendations to fetch
+     * @returns {Promise} Array of recommended EventTemplate objects
+     */
+    getRecommendations: async (limit = 10) => {
+      const response = await apiClient.get(API_ENDPOINTS.EVENTS.RECOMMENDATIONS, {
+        params: { limit },
+      });
+      return response.data;
+    },
+
   /**
    * Search events by name and organizer
    * @param {Object} params - { eventName, organizerName, isMyEventList, page, size }

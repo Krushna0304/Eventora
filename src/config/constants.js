@@ -20,6 +20,7 @@ export const API_ENDPOINTS = {
     GET_BY_NAME_AND_ORGANIZER: '/public/api/events/getByNameAndOrganizer',
     CREATE: '/public/api/events/create',
     UPDATE: '/public/api/events/update',
+    RECOMMENDATIONS: '/api/recommendations',
   },
   // Protected endpoints
   REGISTRATIONS: {
