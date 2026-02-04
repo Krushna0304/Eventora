@@ -1,0 +1,79 @@
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+env/
+venv/
+.venv/
+ENV/
+.env/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+htmlcov/
+.pytest_cache/
+.hypothesis/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Logs
+*.log
+
+# Environment files
+.env.*
+
+# Model artifacts (ignore binary model files, but keep model JSON configs tracked)
+*.h5
+*.hdf5
+*.pb
+*.ckpt
+*.pt
+*.pth
+*.joblib
+*.pkl
+*.sav
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.pb
+models/*.pt
+models/*.pth
+models/*.ckpt
+
+# OS files
+ehthumbs.db

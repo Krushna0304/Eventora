@@ -1,0 +1,18 @@
+{
+  "model_name": "event_success_v2",
+  "model_version": "2.0.0",
+  "random_state": 42,
+  "test_size": 0.2,
+  "cv_folds": 5,
+  "success_threshold": 0.5,
+  "n_estimators": 300,
+  "max_depth": 15,
+  "min_samples_split": 10,
+  "min_samples_leaf": 4,
+  "enable_feature_engineering": true,
+  "scale_features": false,
+  "model_path": "models/event_success_model.pkl",
+  "scaler_path": "models/feature_scaler.pkl",
+  "config_path": "models/model_config.json",
+  "metrics_path": "models/model_metrics.json"
+}
