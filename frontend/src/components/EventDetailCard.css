@@ -1,0 +1,79 @@
+.event-detail-root {
+  padding: 1rem 2rem;
+}
+.detail-header {
+  margin-bottom: 1rem;
+}
+.back-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.event-detail {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  background: var(--card);
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,0.04);
+  box-shadow: 0 10px 30px rgba(17,24,39,0.03);
+}
+.image-wrap img {
+  width: 360px;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.detail-main {
+  flex: 1;
+}
+.title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.45rem;
+}
+.meta-row, .location-row, .dates-row, .participants-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+}
+.tags { margin: 0.5rem 0; }
+.tag {
+  display: inline-block;
+  background: rgba(26,60,255,0.06);
+  padding: 6px 10px;
+  margin-right: 6px;
+  border-radius: 999px;
+  color: var(--muted);
+}
+.description { margin-top: 1rem; color: #111827; line-height: 1.5; }
+.registration-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(15,23,42,0.03);
+}
+
+.registration-button {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s;
+}
+
+.registration-button.register { background-color: #10b981; color: white; }
+.registration-button.register:hover:not(:disabled) { background-color: #059669; }
+.registration-button.registered { background-color: #6b7280; color: white; cursor: default; }
+.registration-button.cancelled { background-color: #ef4444; color: white; }
+.registration-button:disabled { opacity: 0.75; cursor: not-allowed; }
+
+.info { padding: 1rem; background: linear-gradient(180deg,#fff,#fbfdff); border-radius: 8px; }
+.error-message { padding: 0.75rem; background: #fff7f7; border-radius: 8px; color: #b91c1c; }
+
+@media (max-width: 880px) {
+  .event-detail { flex-direction: column; }
+  .image-wrap img { width: 100%; height: auto; }
+}

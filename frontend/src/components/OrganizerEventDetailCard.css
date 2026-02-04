@@ -1,0 +1,48 @@
+.organizer-actions {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(15,23,42,0.03);
+  display: flex;
+  gap: 1rem;
+}
+
+.action-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-button.schedule {
+  background-color: #10b981;
+  color: white;
+}
+
+.action-button.schedule:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.action-button.edit {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.action-button.edit:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.action-button.cancel {
+  background-color: #ef4444;
+  color: white;
+}
+
+.action-button.cancel:hover:not(:disabled) {
+  background-color: #dc2626;
+}

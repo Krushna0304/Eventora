@@ -1,0 +1,120 @@
+:root {
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Clash Display', 'Poppins', var(--font-sans);
+  --gradient: linear-gradient(120deg, #5b7cfa 0%, #7f62f8 35%, #ff7bc0 100%);
+  --surface: #ffffff;
+  --surface-alt: rgba(255, 255, 255, 0.65);
+  --bg-soft: #f4f6ff;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 15px 35px rgba(15, 23, 42, 0.08);
+  --radius-md: 16px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(circle at 15% 15%, rgba(91, 124, 250, 0.25), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(255, 123, 192, 0.22), transparent 35%),
+    linear-gradient(135deg, #040915 0%, #0b1424 55%, #111b2f 100%);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  margin: 0;
+  color: var(--text-primary);
+}
+
+p {
+  margin: 0 0 1rem;
+  color: var(--text-secondary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  position: relative;
+  font-weight: 600;
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background: var(--gradient);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+a:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+button {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  border-radius: 999px;
+  border: none;
+  padding: 0.85rem 1.8rem;
+  background: var(--gradient);
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 20px rgba(91, 124, 250, 0.25);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 28px rgba(91, 124, 250, 0.3);
+}
+
+button:focus-visible {
+  outline: 3px solid rgba(91, 124, 250, 0.45);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gradient);
+  border-radius: 999px;
+}
