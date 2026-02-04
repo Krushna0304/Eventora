@@ -1,0 +1,50 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/eventoradb
+#    url: jdbc:postgresql://localhost:5432/omniservedb
+    username: postgres
+    password: Admin@123
+
+    #url: jdbc:postgresql://ep-holy-resonance-a12oe8by-pooler.ap-southeast-1.aws.neon.tech/neondb
+#    username: neondb_owner
+#    password: npg_IrsLPjk5S4Ry
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc.lob.non_contextual_creation: true
+        format_sql: true
+        use_sql_comments: true
+    show-sql: true
+
+  sql:
+    init:
+      platform: postgresql
+
+server:
+  port: 8080
+
+ml:
+  service:
+#    url: https://eventora-ml-service.onrender.com
+    url: http://0.0.0.0:5000
+    connection-timeout: 10000
+    read-timeout: 30000
+    enabled: true
+    model-name: event_success_v2
+    model-version: 2.0.0
+    cache-duration-hours: 24
+
+jwt:
+  secret: fjb2387rbqjwhfb2873fqjhbf8723grfjhb387jhb3287grbqejhfb
+  expiration-ms: 30000000000000000
